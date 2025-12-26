@@ -18,7 +18,7 @@
 
         body {
             font-family: 'Malgun Gothic', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000;
             overflow: hidden;
             position: fixed;
             width: 100%;
@@ -29,17 +29,19 @@
             position: relative;
             width: 100%;
             height: 100vh;
-            background: #0f3460;
+            background: #000;
             display: flex;
             flex-direction: column;
         }
 
         canvas {
             display: block;
-            background: #2d2d44;
+            background: #88c070;
             width: 100%;
             flex: 1;
             touch-action: none;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
 
         .ui-overlay {
@@ -54,12 +56,13 @@
         }
 
         .stat-box {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 8px 12px;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px 15px;
+            border-radius: 12px;
             color: white;
             font-weight: bold;
             font-size: 14px;
+            border: 2px solid #ffd700;
         }
 
         .player-info {
@@ -68,21 +71,14 @@
             gap: 5px;
         }
 
-        .hp-bar-container {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 8px 12px;
-            border-radius: 8px;
-            min-width: 150px;
-        }
-
         .pokemon-name {
             color: #ffd700;
-            font-size: 14px;
+            font-size: 16px;
             margin-bottom: 3px;
         }
 
         .hp-bar-bg {
-            width: 100%;
+            width: 150px;
             height: 20px;
             background: #333;
             border-radius: 10px;
@@ -131,9 +127,40 @@
             transition: width 0.3s;
         }
 
-        .score-display {
+        .town-name {
             color: #ffd700;
             font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .location-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 50px;
+            border-radius: 20px;
+            border: 3px solid #ffd700;
+            text-align: center;
+            z-index: 500;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .location-info h2 {
+            color: #ffd700;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .location-info p {
+            color: white;
+            font-size: 16px;
         }
 
         /* 모바일 컨트롤 */
@@ -147,44 +174,71 @@
             z-index: 100;
         }
 
-        .joystick-area {
+        .d-pad {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            width: 140px;
-            height: 140px;
+            width: 150px;
+            height: 150px;
             pointer-events: auto;
         }
 
-        .joystick-base {
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            position: relative;
-        }
-
-        .joystick-stick {
+        .d-pad-btn {
             position: absolute;
             width: 50px;
             height: 50px;
-            background: rgba(78, 205, 196, 0.7);
+            background: rgba(50, 50, 50, 0.8);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .d-pad-btn:active {
+            background: rgba(78, 205, 196, 0.8);
+        }
+
+        .d-pad-up {
+            top: 0;
+            left: 50px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .d-pad-down {
+            bottom: 0;
+            left: 50px;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .d-pad-left {
+            top: 50px;
+            left: 0;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .d-pad-right {
+            top: 50px;
+            right: 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .d-pad-center {
+            top: 50px;
+            left: 50px;
+            width: 50px;
+            height: 50px;
+            background: rgba(30, 30, 30, 0.9);
             border-radius: 50%;
-            border: 3px solid #4ecdc4;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.1s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         .action-buttons {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             right: 20px;
             display: flex;
-            flex-direction: column;
             gap: 15px;
             pointer-events: auto;
         }
@@ -194,7 +248,7 @@
             height: 70px;
             border-radius: 50%;
             border: 3px solid;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -211,12 +265,12 @@
 
         .attack-btn {
             border-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.3);
+            background: rgba(255, 107, 107, 0.4);
         }
 
         .skill-btn {
             border-color: #9b59b6;
-            background: rgba(155, 89, 182, 0.3);
+            background: rgba(155, 89, 182, 0.4);
         }
 
         .skill-cooldown {
@@ -226,7 +280,7 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -242,7 +296,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -259,30 +313,32 @@
             font-size: 2.5em;
             margin-bottom: 20px;
             color: #ffd700;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
             text-align: center;
         }
 
         .subtitle {
-            color: #4ecdc4;
+            color: white;
             font-size: 16px;
             margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         .trainer-name-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #4ecdc4;
-            color: white;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #ffd700;
+            color: #333;
             padding: 12px 20px;
             border-radius: 25px;
             font-size: 16px;
             text-align: center;
             margin-bottom: 20px;
             width: 250px;
+            font-weight: bold;
         }
 
         .trainer-name-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(0, 0, 0, 0.4);
         }
 
         .pokemon-select {
@@ -294,60 +350,63 @@
         }
 
         .pokemon-card {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
             cursor: pointer;
             transition: all 0.3s;
-            border: 3px solid transparent;
+            border: 4px solid transparent;
             text-align: center;
-            min-width: 120px;
+            min-width: 140px;
         }
 
         .pokemon-card.selected {
             border-color: #ffd700;
-            background: rgba(255, 215, 0, 0.2);
-            transform: scale(1.05);
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
         }
 
-        .pokemon-icon {
-            font-size: 50px;
-            margin-bottom: 8px;
+        .pokemon-preview {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px;
         }
 
         .pokemon-name-display {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            color: white;
+            color: #333;
             margin-bottom: 5px;
         }
 
         .pokemon-type {
-            font-size: 11px;
-            color: #aaa;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 3px 8px;
-            border-radius: 10px;
+            font-size: 12px;
+            color: white;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 10px;
+            border-radius: 12px;
             display: inline-block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .pokemon-stats {
-            font-size: 11px;
-            color: #aaa;
+            font-size: 12px;
+            color: #666;
         }
 
         .start-btn {
-            background: #4ecdc4;
-            color: white;
-            border: none;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            border: 3px solid #ff6b00;
             padding: 15px 40px;
-            font-size: 20px;
+            font-size: 22px;
             border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s;
             font-weight: bold;
             margin-top: 20px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
         }
 
         .start-btn:active {
@@ -356,13 +415,14 @@
 
         .start-btn:disabled {
             background: #666;
+            border-color: #444;
             cursor: not-allowed;
         }
 
         .leaderboard-btn {
-            background: rgba(255, 215, 0, 0.3);
-            border: 2px solid #ffd700;
-            color: #ffd700;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
             padding: 10px 30px;
             font-size: 16px;
             border-radius: 20px;
@@ -402,6 +462,7 @@
             padding: 20px;
             border-radius: 15px;
             margin: 20px 0;
+            border: 2px solid #ffd700;
         }
 
         .stats {
@@ -411,30 +472,30 @@
         }
 
         .restart-btn {
-            background: #4ecdc4;
+            background: linear-gradient(135deg, #4ecdc4, #45b7af);
             color: white;
-            border: none;
+            border: 3px solid #2d7a73;
             padding: 15px 40px;
             font-size: 20px;
             border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s;
             font-weight: bold;
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         .restart-btn:active {
             transform: scale(0.95);
         }
 
-        /* 리더보드 화면 */
+        /* 리더보드 */
         #leaderboardScreen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -454,18 +515,19 @@
         }
 
         .leaderboard-item {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             padding: 15px;
             margin: 10px 0;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: white;
+            border: 2px solid transparent;
         }
 
         .leaderboard-item.top3 {
-            background: rgba(255, 215, 0, 0.2);
+            background: rgba(255, 215, 0, 0.25);
             border: 2px solid #ffd700;
         }
 
@@ -487,7 +549,7 @@
 
         .trainer-pokemon {
             font-size: 12px;
-            color: #aaa;
+            color: #ddd;
         }
 
         .score {
@@ -497,9 +559,9 @@
         }
 
         .close-btn {
-            background: #e74c3c;
+            background: rgba(0, 0, 0, 0.6);
             color: white;
-            border: none;
+            border: 2px solid white;
             padding: 12px 30px;
             font-size: 16px;
             border-radius: 20px;
@@ -518,12 +580,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 215, 0, 0.95);
-            padding: 30px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            padding: 30px 50px;
             border-radius: 20px;
             text-align: center;
             z-index: 500;
             animation: popupAppear 0.3s;
+            border: 4px solid #ff6b00;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
         }
 
         @keyframes popupAppear {
@@ -537,13 +601,15 @@
 
         .level-up-popup h2 {
             color: #333;
-            font-size: 32px;
+            font-size: 36px;
             margin-bottom: 10px;
+            text-shadow: 2px 2px 0 rgba(255,255,255,0.5);
         }
 
         .level-up-popup p {
             color: #666;
-            font-size: 18px;
+            font-size: 20px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -553,7 +619,7 @@
         
         <div class="ui-overlay">
             <div class="player-info">
-                <div class="hp-bar-container">
+                <div class="stat-box">
                     <div class="pokemon-name" id="pokemonName">피카츄</div>
                     <div class="hp-bar-bg">
                         <div class="hp-bar" id="hpBar" style="width: 100%;">100/100</div>
@@ -561,19 +627,21 @@
                 </div>
             </div>
             <div class="stat-box game-stats">
+                <div class="town-name" id="townName">시작 마을</div>
                 <div class="level-display" id="levelDisplay">레벨: 1</div>
                 <div class="exp-bar">
                     <div class="exp-fill" id="expBar" style="width: 0%"></div>
                 </div>
-                <div class="score-display" id="scoreDisplay">점수: 0</div>
             </div>
         </div>
 
         <div class="mobile-controls">
-            <div class="joystick-area" id="joystickArea">
-                <div class="joystick-base">
-                    <div class="joystick-stick" id="joystickStick"></div>
-                </div>
+            <div class="d-pad">
+                <div class="d-pad-btn d-pad-up" id="btnUp">▲</div>
+                <div class="d-pad-btn d-pad-down" id="btnDown">▼</div>
+                <div class="d-pad-btn d-pad-left" id="btnLeft">◀</div>
+                <div class="d-pad-btn d-pad-right" id="btnRight">▶</div>
+                <div class="d-pad-center"></div>
             </div>
 
             <div class="action-buttons">
@@ -593,26 +661,26 @@
 
             <div class="pokemon-select">
                 <div class="pokemon-card" data-pokemon="pikachu">
-                    <div class="pokemon-icon">⚡</div>
+                    <canvas class="pokemon-preview" width="100" height="100"></canvas>
                     <div class="pokemon-name-display">피카츄</div>
                     <div class="pokemon-type">전기</div>
                     <div class="pokemon-stats">HP: 100 | 빠른 공격</div>
                 </div>
                 <div class="pokemon-card" data-pokemon="charmander">
-                    <div class="pokemon-icon">🔥</div>
+                    <canvas class="pokemon-preview" width="100" height="100"></canvas>
                     <div class="pokemon-name-display">파이리</div>
                     <div class="pokemon-type">불꽃</div>
                     <div class="pokemon-stats">HP: 120 | 강한 공격</div>
                 </div>
                 <div class="pokemon-card" data-pokemon="squirtle">
-                    <div class="pokemon-icon">💧</div>
+                    <canvas class="pokemon-preview" width="100" height="100"></canvas>
                     <div class="pokemon-name-display">꼬부기</div>
                     <div class="pokemon-type">물</div>
                     <div class="pokemon-stats">HP: 130 | 방어력 높음</div>
                 </div>
             </div>
 
-            <button class="start-btn" id="startBtn" disabled>게임 시작</button>
+            <button class="start-btn" id="startBtn" disabled>모험 시작!</button>
             <button class="leaderboard-btn" id="showLeaderboardBtn">🏆 리더보드</button>
         </div>
 
@@ -620,10 +688,10 @@
             <h1 class="game-over-title">게임 오버</h1>
             <div class="final-stats">
                 <div class="stats">레벨: <span id="finalLevel">0</span></div>
-                <div class="stats">점수: <span id="finalScore">0</span></div>
+                <div class="stats">최종 위치: <span id="finalTown">0</span></div>
                 <div class="stats">처치: <span id="finalKills">0</span></div>
             </div>
-            <p style="color: #4ecdc4; font-size: 16px; margin: 10px 0;">점수가 저장되었습니다!</p>
+            <p style="color: #4ecdc4; font-size: 16px; margin: 10px 0;">기록이 저장되었습니다!</p>
             <button class="restart-btn" id="restartBtn">다시 시작</button>
             <button class="leaderboard-btn" id="showLeaderboardBtn2">🏆 리더보드</button>
         </div>
@@ -654,16 +722,15 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Firebase 함수를 전역으로 노출
-        window.saveScore = async function(trainerName, pokemon, level, score, kills) {
+        window.saveScore = async function(trainerName, pokemon, level, town, kills) {
             try {
-                const scoresRef = ref(database, 'pokemon-game/scores');
+                const scoresRef = ref(database, 'pokemon-adventure/scores');
                 const newScoreRef = push(scoresRef);
                 await set(newScoreRef, {
                     trainerName: trainerName,
                     pokemon: pokemon,
                     level: level,
-                    score: score,
+                    town: town,
                     kills: kills,
                     timestamp: Date.now()
                 });
@@ -675,8 +742,8 @@
 
         window.loadLeaderboard = async function() {
             try {
-                const scoresRef = ref(database, 'pokemon-game/scores');
-                const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(10));
+                const scoresRef = ref(database, 'pokemon-adventure/scores');
+                const topScoresQuery = query(scoresRef, orderByChild('level'), limitToLast(10));
                 const snapshot = await get(topScoresQuery);
                 
                 const scores = [];
@@ -684,8 +751,7 @@
                     scores.push(childSnapshot.val());
                 });
                 
-                // 점수 높은 순으로 정렬
-                scores.sort((a, b) => b.score - a.score);
+                scores.sort((a, b) => b.level - a.level);
                 return scores;
             } catch (error) {
                 console.error('리더보드 로딩 실패:', error);
@@ -707,6 +773,224 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
+        // 포켓몬 그리기 함수
+        function drawPokemon(ctx, type, x, y, size) {
+            ctx.save();
+            
+            if (type === 'pikachu') {
+                // 피카츄
+                // 귀 (왼쪽)
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.moveTo(x - size * 0.25, y - size * 0.3);
+                ctx.lineTo(x - size * 0.4, y - size * 0.7);
+                ctx.lineTo(x - size * 0.15, y - size * 0.4);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.moveTo(x - size * 0.35, y - size * 0.65);
+                ctx.lineTo(x - size * 0.42, y - size * 0.72);
+                ctx.lineTo(x - size * 0.28, y - size * 0.58);
+                ctx.fill();
+                
+                // 귀 (오른쪽)
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.moveTo(x + size * 0.25, y - size * 0.3);
+                ctx.lineTo(x + size * 0.4, y - size * 0.7);
+                ctx.lineTo(x + size * 0.15, y - size * 0.4);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.moveTo(x + size * 0.35, y - size * 0.65);
+                ctx.lineTo(x + size * 0.42, y - size * 0.72);
+                ctx.lineTo(x + size * 0.28, y - size * 0.58);
+                ctx.fill();
+                
+                // 머리
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(x, y - size * 0.2, size * 0.35, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 몸통
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.ellipse(x, y + size * 0.15, size * 0.3, size * 0.35, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 눈
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(x - size * 0.15, y - size * 0.25, size * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + size * 0.15, y - size * 0.25, size * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 볼
+                ctx.fillStyle = '#FF6B6B';
+                ctx.beginPath();
+                ctx.arc(x - size * 0.25, y - size * 0.15, size * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + size * 0.25, y - size * 0.15, size * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 입
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y - size * 0.1, size * 0.1, 0, Math.PI);
+                ctx.stroke();
+                
+                // 꼬리
+                ctx.strokeStyle = '#FFA500';
+                ctx.lineWidth = size * 0.15;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(x + size * 0.25, y + size * 0.2);
+                ctx.lineTo(x + size * 0.45, y - size * 0.1);
+                ctx.lineTo(x + size * 0.55, y - size * 0.3);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(x + size * 0.5, y - size * 0.35);
+                ctx.lineTo(x + size * 0.65, y - size * 0.45);
+                ctx.lineTo(x + size * 0.6, y - size * 0.25);
+                ctx.fill();
+                
+            } else if (type === 'charmander') {
+                // 파이리
+                // 몸통
+                ctx.fillStyle = '#FF6B4A';
+                ctx.beginPath();
+                ctx.ellipse(x, y + size * 0.1, size * 0.35, size * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 머리
+                ctx.fillStyle = '#FF6B4A';
+                ctx.beginPath();
+                ctx.arc(x, y - size * 0.25, size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 눈
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.ellipse(x - size * 0.12, y - size * 0.28, size * 0.1, size * 0.12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(x + size * 0.12, y - size * 0.28, size * 0.1, size * 0.12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(x - size * 0.12, y - size * 0.28, size * 0.06, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + size * 0.12, y - size * 0.28, size * 0.06, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 배
+                ctx.fillStyle = '#FFE4B5';
+                ctx.beginPath();
+                ctx.ellipse(x, y + size * 0.15, size * 0.25, size * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 코
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(x - size * 0.05, y - size * 0.18);
+                ctx.lineTo(x, y - size * 0.12);
+                ctx.lineTo(x + size * 0.05, y - size * 0.18);
+                ctx.fill();
+                
+                // 꼬리 (불꽃)
+                ctx.fillStyle = '#FFA500';
+                ctx.beginPath();
+                ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FF4500';
+                ctx.beginPath();
+                ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.05, 0, Math.PI * 2);
+                ctx.fill();
+                
+            } else if (type === 'squirtle') {
+                // 꼬부기
+                // 등껍질
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.ellipse(x, y + size * 0.05, size * 0.4, size * 0.35, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 등껍질 무늬
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 6; i++) {
+                    ctx.beginPath();
+                    ctx.arc(x, y + size * 0.05, size * 0.15 + i * size * 0.05, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // 머리
+                ctx.fillStyle = '#4A90E2';
+                ctx.beginPath();
+                ctx.arc(x, y - size * 0.3, size * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 눈
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(x - size * 0.1, y - size * 0.32, size * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + size * 0.1, y - size * 0.32, size * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(x - size * 0.1, y - size * 0.32, size * 0.05, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + size * 0.1, y - size * 0.32, size * 0.05, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 입
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y - size * 0.22, size * 0.08, 0, Math.PI);
+                ctx.stroke();
+                
+                // 꼬리
+                ctx.fillStyle = '#4A90E2';
+                ctx.beginPath();
+                ctx.moveTo(x + size * 0.3, y + size * 0.15);
+                ctx.quadraticCurveTo(x + size * 0.45, y + size * 0.2, x + size * 0.5, y + size * 0.3);
+                ctx.lineTo(x + size * 0.42, y + size * 0.28);
+                ctx.quadraticCurveTo(x + size * 0.38, y + size * 0.18, x + size * 0.28, y + size * 0.18);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+
+        // 프리뷰 캔버스 그리기
+        document.querySelectorAll('.pokemon-preview').forEach((canvas, index) => {
+            const ctx = canvas.getContext('2d');
+            const types = ['pikachu', 'charmander', 'squirtle'];
+            drawPokemon(ctx, types[index], 50, 55, 35);
+        });
+
         // 게임 상태
         let gameState = 'menu';
         let selectedPokemon = null;
@@ -718,21 +1002,54 @@
         let level = 1;
         let exp = 0;
         let expToNextLevel = 100;
-        let score = 0;
         let kills = 0;
-        let enemiesInWave = 0;
+        let currentTown = 0;
+        let showingLocation = false;
 
-        // 조이스틱
-        let joystickActive = false;
-        let joystickStart = { x: 0, y: 0 };
-        let joystickCurrent = { x: 0, y: 0 };
-        let moveDirection = { x: 0, y: 0 };
+        // 마을 데이터
+        const towns = [
+            { 
+                name: '시작 마을', 
+                bgColor: '#88c070',
+                treeColor: '#306850',
+                houseColor: '#d08060',
+                pathColor: '#c8b090',
+                enemySpawnRate: 1000
+            },
+            { 
+                name: '숲 마을', 
+                bgColor: '#507050',
+                treeColor: '#204020',
+                houseColor: '#8B4513',
+                pathColor: '#654321',
+                enemySpawnRate: 800
+            },
+            { 
+                name: '호수 마을', 
+                bgColor: '#7090d0',
+                treeColor: '#306850',
+                houseColor: '#f0e0d0',
+                pathColor: '#d0c0b0',
+                enemySpawnRate: 600
+            },
+            { 
+                name: '산 마을', 
+                bgColor: '#a08070',
+                treeColor: '#505050',
+                houseColor: '#909090',
+                pathColor: '#787878',
+                enemySpawnRate: 500
+            }
+        ];
+
+        // 입력
+        const keys = {};
 
         // 포켓몬 데이터
         const pokemonData = {
             pikachu: {
                 name: '피카츄',
-                icon: '⚡',
+                type: 'pikachu',
                 maxHp: 100,
                 speed: 4,
                 attackDamage: 20,
@@ -746,7 +1063,7 @@
             },
             charmander: {
                 name: '파이리',
-                icon: '🔥',
+                type: 'charmander',
                 maxHp: 120,
                 speed: 3,
                 attackDamage: 30,
@@ -760,7 +1077,7 @@
             },
             squirtle: {
                 name: '꼬부기',
-                icon: '💧',
+                type: 'squirtle',
                 maxHp: 130,
                 speed: 3.5,
                 attackDamage: 25,
@@ -774,7 +1091,7 @@
             }
         };
 
-        // 포켓몬 선택
+        // 캐릭터 선택
         document.querySelectorAll('.pokemon-card').forEach(card => {
             card.addEventListener('click', function() {
                 document.querySelectorAll('.pokemon-card').forEach(c => c.classList.remove('selected'));
@@ -838,9 +1155,9 @@
                         <div class="rank">${medal || rank}</div>
                         <div class="trainer-info">
                             <div class="trainer-name">${score.trainerName}</div>
-                            <div class="trainer-pokemon">${score.pokemon} | 레벨 ${score.level}</div>
+                            <div class="trainer-pokemon">${score.pokemon} | ${score.town}</div>
                         </div>
-                        <div class="score">${score.score.toLocaleString()}</div>
+                        <div class="score">Lv.${score.level}</div>
                     </div>
                 `;
             }).join('');
@@ -848,53 +1165,28 @@
             document.getElementById('leaderboardList').innerHTML = listHtml;
         }
 
-        // 조이스틱
-        const joystickArea = document.getElementById('joystickArea');
-        const joystickStick = document.getElementById('joystickStick');
+        // D-패드 컨트롤
+        const directions = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        };
 
-        joystickArea.addEventListener('touchstart', handleJoystickStart);
-        joystickArea.addEventListener('touchmove', handleJoystickMove);
-        joystickArea.addEventListener('touchend', handleJoystickEnd);
-
-        function handleJoystickStart(e) {
-            e.preventDefault();
-            joystickActive = true;
-            const rect = joystickArea.getBoundingClientRect();
-            joystickStart.x = rect.left + rect.width / 2;
-            joystickStart.y = rect.top + rect.height / 2;
-        }
-
-        function handleJoystickMove(e) {
-            e.preventDefault();
-            if (!joystickActive) return;
-
-            const touch = e.touches[0];
-            const dx = touch.clientX - joystickStart.x;
-            const dy = touch.clientY - joystickStart.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxDistance = 45;
-
-            if (distance > maxDistance) {
-                joystickCurrent.x = (dx / distance) * maxDistance;
-                joystickCurrent.y = (dy / distance) * maxDistance;
-            } else {
-                joystickCurrent.x = dx;
-                joystickCurrent.y = dy;
-            }
-
-            joystickStick.style.transform = `translate(calc(-50% + ${joystickCurrent.x}px), calc(-50% + ${joystickCurrent.y}px))`;
-
-            moveDirection.x = joystickCurrent.x / maxDistance;
-            moveDirection.y = joystickCurrent.y / maxDistance;
-        }
-
-        function handleJoystickEnd(e) {
-            e.preventDefault();
-            joystickActive = false;
-            joystickStick.style.transform = 'translate(-50%, -50%)';
-            moveDirection.x = 0;
-            moveDirection.y = 0;
-        }
+        ['btnUp', 'btnDown', 'btnLeft', 'btnRight'].forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            const dir = btnId.replace('btn', '').toLowerCase();
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                directions[dir] = true;
+            });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                directions[dir] = false;
+            });
+        });
 
         // 공격/스킬
         let lastAttackTime = 0;
@@ -919,10 +1211,12 @@
             player = {
                 x: canvas.width / 2,
                 y: canvas.height / 2,
-                size: 25,
+                size: 30,
                 hp: pokemonInfo.maxHp,
                 maxHp: pokemonInfo.maxHp,
                 invulnerable: 0,
+                direction: 'down',
+                frame: 0,
                 ...pokemonInfo
             };
 
@@ -932,15 +1226,16 @@
             level = 1;
             exp = 0;
             expToNextLevel = 100;
-            score = 0;
             kills = 0;
-            enemiesInWave = 0;
+            currentTown = 0;
             lastAttackTime = 0;
             lastSkillTime = 0;
 
             document.getElementById('pokemonName').textContent = pokemonInfo.name;
+            document.getElementById('townName').textContent = towns[0].name;
             
-            spawnWave();
+            showLocationScreen();
+            spawnEnemies();
             updateUI();
 
             gameState = 'playing';
@@ -949,13 +1244,26 @@
             gameLoop();
         }
 
-        function spawnWave() {
-            const count = 3 + level * 2;
-            enemiesInWave = count;
+        function showLocationScreen() {
+            showingLocation = true;
+            const popup = document.createElement('div');
+            popup.className = 'location-info';
+            popup.innerHTML = `
+                <h2>${towns[currentTown].name}</h2>
+                <p>새로운 지역에 도착했습니다!</p>
+            `;
+            document.getElementById('gameContainer').appendChild(popup);
 
-            for (let i = 0; i < count; i++) {
-                setTimeout(() => spawnEnemy(), i * 700);
-            }
+            setTimeout(() => {
+                popup.remove();
+                showingLocation = false;
+            }, 2000);
+        }
+
+        let enemySpawnTimer = 0;
+
+        function spawnEnemies() {
+            enemySpawnTimer = Date.now();
         }
 
         function spawnEnemy() {
@@ -971,12 +1279,12 @@
             }
 
             const wildPokemon = [
-                { icon: '👾', hp: 20 + level * 5, speed: 1.5, size: 18, color: '#e74c3c', damage: 8, expReward: 10, scoreReward: 50 },
-                { icon: '🦇', hp: 30 + level * 7, speed: 2, size: 20, color: '#8e44ad', damage: 12, expReward: 15, scoreReward: 75 },
-                { icon: '👻', hp: 40 + level * 10, speed: 1.2, size: 22, color: '#3498db', damage: 15, expReward: 20, scoreReward: 100 }
+                { icon: '👾', hp: 20 + currentTown * 10, speed: 1.5, size: 20, color: '#e74c3c', damage: 5 + currentTown * 2, expReward: 15 },
+                { icon: '🦇', hp: 30 + currentTown * 15, speed: 2, size: 22, color: '#8e44ad', damage: 8 + currentTown * 3, expReward: 20 },
+                { icon: '👻', hp: 40 + currentTown * 20, speed: 1.2, size: 24, color: '#3498db', damage: 10 + currentTown * 4, expReward: 25 }
             ];
 
-            const typeIndex = Math.min(Math.floor(level / 2), 2);
+            const typeIndex = Math.min(currentTown, 2);
             const enemyType = wildPokemon[typeIndex];
 
             enemies.push({
@@ -1016,7 +1324,6 @@
             if (now - lastSkillTime < player.skillCooldown) return;
             lastSkillTime = now;
 
-            // 광역 공격
             enemies.forEach(enemy => {
                 const dx = enemy.x - player.x;
                 const dy = enemy.y - player.y;
@@ -1058,19 +1365,13 @@
             if (index > -1) {
                 enemies.splice(index, 1);
                 kills++;
-                enemiesInWave--;
                 
                 exp += enemy.expReward;
-                score += enemy.scoreReward;
 
                 checkLevelUp();
                 updateUI();
 
                 createParticles(enemy.x, enemy.y, enemy.color, 20);
-
-                if (enemiesInWave === 0 && enemies.length === 0) {
-                    setTimeout(spawnWave, 2000);
-                }
             }
         }
 
@@ -1080,11 +1381,18 @@
                 level++;
                 expToNextLevel = Math.floor(expToNextLevel * 1.5);
                 
-                // 레벨업 보상
                 player.hp = Math.min(player.maxHp, player.hp + 20);
                 player.attackDamage += 5;
                 
                 showLevelUpPopup();
+                
+                // 5레벨마다 다음 마을로
+                if (level % 5 === 0 && currentTown < towns.length - 1) {
+                    currentTown++;
+                    document.getElementById('townName').textContent = towns[currentTown].name;
+                    showLocationScreen();
+                }
+                
                 updateUI();
             }
         }
@@ -1142,16 +1450,45 @@
         }
 
         function update() {
-            // 플레이어 이동
-            if (moveDirection.x !== 0 || moveDirection.y !== 0) {
-                player.x += moveDirection.x * player.speed;
-                player.y += moveDirection.y * player.speed;
+            if (showingLocation) return;
 
-                player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
-                player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+            // 플레이어 이동
+            let moving = false;
+            if (directions.up) {
+                player.y -= player.speed;
+                player.direction = 'up';
+                moving = true;
+            }
+            if (directions.down) {
+                player.y += player.speed;
+                player.direction = 'down';
+                moving = true;
+            }
+            if (directions.left) {
+                player.x -= player.speed;
+                player.direction = 'left';
+                moving = true;
+            }
+            if (directions.right) {
+                player.x += player.speed;
+                player.direction = 'right';
+                moving = true;
             }
 
+            if (moving) {
+                player.frame = (player.frame + 0.2) % 2;
+            }
+
+            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+
             if (player.invulnerable > 0) player.invulnerable--;
+
+            // 적 스폰
+            if (Date.now() - enemySpawnTimer > towns[currentTown].enemySpawnRate) {
+                spawnEnemy();
+                enemySpawnTimer = Date.now();
+            }
 
             // 발사체
             projectiles = projectiles.filter(proj => {
@@ -1225,24 +1562,72 @@
         }
 
         function render() {
-            ctx.fillStyle = '#2d2d44';
+            const town = towns[currentTown];
+            
+            // 배경
+            ctx.fillStyle = town.bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 그리드
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.lineWidth = 1;
-            const gridSize = 40;
-            for (let i = 0; i < canvas.width; i += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, canvas.height);
-                ctx.stroke();
+            // 길
+            ctx.fillStyle = town.pathColor;
+            for (let i = 0; i < canvas.width; i += 100) {
+                ctx.fillRect(i + 30, 0, 40, canvas.height);
             }
-            for (let i = 0; i < canvas.height; i += gridSize) {
+            for (let i = 0; i < canvas.height; i += 100) {
+                ctx.fillRect(0, i + 30, canvas.width, 40);
+            }
+
+            // 나무
+            for (let i = 0; i < 10; i++) {
+                const tx = (i * 123 + 50) % canvas.width;
+                const ty = (i * 87 + 50) % canvas.height;
+                
+                // 나무 그림자
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
                 ctx.beginPath();
-                ctx.moveTo(0, i);
-                ctx.lineTo(canvas.width, i);
-                ctx.stroke();
+                ctx.ellipse(tx, ty + 35, 15, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 나무 몸통
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(tx - 5, ty + 10, 10, 25);
+                
+                // 나무 잎
+                ctx.fillStyle = town.treeColor;
+                ctx.beginPath();
+                ctx.arc(tx, ty, 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 집
+            for (let i = 0; i < 3; i++) {
+                const hx = (i * 250 + 100) % canvas.width;
+                const hy = (i * 150 + 100) % canvas.height;
+                
+                // 집 그림자
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(hx + 5, hy + 45, 60, 5);
+                
+                // 집 몸체
+                ctx.fillStyle = town.houseColor;
+                ctx.fillRect(hx, hy + 20, 60, 30);
+                
+                // 지붕
+                ctx.fillStyle = '#8B0000';
+                ctx.beginPath();
+                ctx.moveTo(hx - 5, hy + 20);
+                ctx.lineTo(hx + 30, hy - 10);
+                ctx.lineTo(hx + 65, hy + 20);
+                ctx.fill();
+                
+                // 문
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(hx + 20, hy + 30, 20, 20);
+                
+                // 창문
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(hx + 5, hy + 25, 10, 10);
+                ctx.fillRect(hx + 45, hy + 25, 10, 10);
             }
 
             // 파티클
@@ -1269,6 +1654,7 @@
 
             // 적
             enemies.forEach(enemy => {
+                // 그림자
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.beginPath();
                 ctx.ellipse(enemy.x, enemy.y + enemy.size + 3, enemy.size * 0.8, enemy.size * 0.3, 0, 0, Math.PI * 2);
@@ -1297,24 +1683,14 @@
 
             // 플레이어
             if (player.invulnerable === 0 || Math.floor(Date.now() / 100) % 2 === 0) {
+                // 그림자
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.beginPath();
-                ctx.ellipse(player.x, player.y + player.size + 3, player.size * 0.8, player.size * 0.3, 0, 0, Math.PI * 2);
+                ctx.ellipse(player.x, player.y + player.size + 5, player.size * 0.7, player.size * 0.25, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = player.color;
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                ctx.font = `${player.size * 1.2}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(player.icon, player.x, player.y);
+                // 플레이어 포켓몬 그리기
+                drawPokemon(ctx, player.type, player.x, player.y, player.size);
             }
         }
 
@@ -1334,18 +1710,15 @@
             
             const expPercent = (exp / expToNextLevel) * 100;
             document.getElementById('expBar').style.width = expPercent + '%';
-            
-            document.getElementById('scoreDisplay').textContent = `점수: ${score.toLocaleString()}`;
         }
 
         async function gameOver() {
             gameState = 'gameover';
             
-            // Firebase에 점수 저장
-            await window.saveScore(trainerNameValue, pokemonData[selectedPokemon].name, level, score, kills);
+            await window.saveScore(trainerNameValue, pokemonData[selectedPokemon].name, level, towns[currentTown].name, kills);
             
             document.getElementById('finalLevel').textContent = level;
-            document.getElementById('finalScore').textContent = score.toLocaleString();
+            document.getElementById('finalTown').textContent = towns[currentTown].name;
             document.getElementById('finalKills').textContent = kills;
             document.getElementById('gameOverScreen').classList.remove('hidden');
         }
