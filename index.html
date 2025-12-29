@@ -304,8 +304,8 @@ function loadMap(m) {
     enemies = []; projs = []; parts = []; npcs = []; obs = []; portals = []; drops = []; spawnT = 0;
     if (M.npcs) M.npcs.forEach(n => npcs.push({ ...n, w: 40, h: 40 }));
     if (M.buildings) M.buildings.forEach(b => obs.push({ ...b, type: 'bld' }));
-    if (M.trees) for (let i = 0; i < M.trees; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 40, h: 40, type: 'tree' });
-    if (M.rocks) for (let i = 0; i < M.rocks; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 35, h: 35, type: 'rock' });
+    if (M.trees) for (let i = 0; i < M.trees; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 20, h: 20, type: 'tree' });
+    if (M.rocks) for (let i = 0; i < M.rocks; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 18, h: 18, type: 'rock' });
     if (M.portals) portals = M.portals.map(p => ({ ...p }));
 }
 
@@ -352,7 +352,7 @@ function updatePlayer(dt, M) {
         
         let ok = 1;
         obs.forEach(o => {
-            if (nx > o.x - P.w/2 && nx < o.x + o.w + P.w/2 && ny > o.y - P.h/2 && ny < o.y + o.h + P.h/2) ok = 0;
+            if (nx > o.x - 10 && nx < o.x + o.w + 10 && ny > o.y - 10 && ny < o.y + o.h + 10) ok = 0;
         });
         if (ok) {
             P.x = clamp(nx, P.w/2, M.w - P.w/2);
