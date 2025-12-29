@@ -765,7 +765,7 @@ function startGame(pokemonId) {
     player = {
         x: MAP_WIDTH / 2,
         y: MAP_HEIGHT / 2,
-        size: 30,
+        size: 15,
         ...pokemonData,
         hp: pokemonData.maxHp,
         invulnerable: 0,
@@ -817,10 +817,10 @@ function spawnEnemies() {
         const y = Math.max(50, Math.min(MAP_HEIGHT - 50, player.y + Math.sin(angle) * distance));
         
         enemies.push({
-            x, y, size: 25,
+            x, y, size: 12.5,
             hp: 40 + currentRoom * 15,
             maxHp: 40 + currentRoom * 15,
-            speed: 120 + currentRoom * 10,
+            speed: 60 + currentRoom * 5,
             damage: 12 + currentRoom * 3,
             lastAttack: 0,
             attackCooldown: 2500,
