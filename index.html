@@ -541,7 +541,7 @@ const POKEMON_DATA = {
     sylveon: { 
         name: '님피아', 
         sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/700.png',
-        gameSprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/700.gif',
+        gameSprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/700.png',
         type: 'fairy',
         maxHp: 120, speed: 310, attackDamage: 23, attackSpeed: 1.2, projectileSpeed: 530,
         skill1: { name: '문포스', damage: 80, cooldown: 4300, range: 390 },
@@ -772,7 +772,7 @@ function startGame(pokemonId) {
         isDashing: false,
         shield: 0,
         image: null,
-        rotation: 0  // 회전 각도 추가
+        direction: 'down'  // 방향: 'up', 'down', 'left', 'right'
     };
     
     // 플레이어 이미지 로드
@@ -1082,9 +1082,15 @@ function update(dt) {
         player.x = Math.max(player.size, Math.min(MAP_WIDTH - player.size, player.x));
         player.y = Math.max(player.size, Math.min(MAP_HEIGHT - player.size, player.y));
         
-        // 이동 방향에 따라 회전 각도 계산
+        // 이동 방향에 따라 방향 설정 (4방향)
         if (Math.abs(joystickVector.x) > 0.1 || Math.abs(joystickVector.y) > 0.1) {
-            player.rotation = Math.atan2(joystickVector.y, joystickVector.x);
+            if (Math.abs(joystickVector.x) > Math.abs(joystickVector.y)) {
+                // 좌우 이동이 더 큼
+                player.direction = joystickVector.x > 0 ? 'right' : 'left';
+            } else {
+                // 상하 이동이 더 큼
+                player.direction = joystickVector.y > 0 ? 'down' : 'up';
+            }
         }
     }
     
@@ -1295,10 +1301,16 @@ function render() {
     });
     
     enemies.forEach(enemy => {
-        // 플레이어를 향한 각도 계산
+        // 플레이어를 향한 방향 계산
         const dx = player.x - enemy.x;
         const dy = player.y - enemy.y;
-        const angle = Math.atan2(dy, dx);
+        
+        let enemyDirection = 'down';
+        if (Math.abs(dx) > Math.abs(dy)) {
+            enemyDirection = dx > 0 ? 'right' : 'left';
+        } else {
+            enemyDirection = dy > 0 ? 'down' : 'up';
+        }
         
         // 그림자
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -1306,11 +1318,17 @@ function render() {
         ctx.ellipse(enemy.x, enemy.y + enemy.size + 3, enemy.size * 0.8, enemy.size * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 포켓몬 이미지 (회전 적용)
+        // 포켓몬 이미지 (4방향)
         if (enemy.image && enemy.image.complete) {
             ctx.save();
             ctx.translate(enemy.x, enemy.y);
-            ctx.rotate(angle);
+            
+            if (enemyDirection === 'left') {
+                ctx.scale(-1, 1);
+            } else if (enemyDirection === 'up') {
+                ctx.rotate(Math.PI);
+            }
+            
             ctx.drawImage(enemy.image, -enemy.size, -enemy.size, enemy.size * 2, enemy.size * 2);
             ctx.restore();
         } else {
@@ -1337,24 +1355,33 @@ function render() {
         ctx.ellipse(player.x, player.y + player.size + 5, player.size * 0.7, player.size * 0.25, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 플레이어 포켓몬 이미지 (회전 적용)
+        // 플레이어 포켓몬 이미지 (4방향)
         if (player.image && player.image.complete) {
             ctx.save();
             ctx.translate(player.x, player.y);
-            ctx.rotate(player.rotation);
+            
+            // 방향에 따라 이미지 변환
+            if (player.direction === 'left') {
+                // 왼쪽: 좌우 반전
+                ctx.scale(-1, 1);
+            } else if (player.direction === 'up') {
+                // 위쪽: 180도 회전 (뒷모습)
+                ctx.rotate(Math.PI);
+            } else if (player.direction === 'down') {
+                // 아래쪽: 그대로 (앞모습)
+            } else if (player.direction === 'right') {
+                // 오른쪽: 그대로
+            }
+            
             ctx.drawImage(player.image, -player.size, -player.size, player.size * 2, player.size * 2);
             ctx.restore();
         } else {
             // 이미지 로딩 중일 때 텍스트로 표시
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.rotate(player.rotation);
             ctx.font = `${player.size * 2}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = getTypeColor(player.type);
-            ctx.fillText(player.name[0], 0, 0);
-            ctx.restore();
+            ctx.fillText(player.name[0], player.x, player.y);
         }
         
         // 보호막
