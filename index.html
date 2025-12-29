@@ -3,1130 +3,928 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>정우의 포켓몬 RPG</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Malgun Gothic', sans-serif; background: #000; overflow: hidden; position: fixed; width: 100%; height: 100%; }
-        #gameCanvas { display: block; background: #88c070; touch-action: none; image-rendering: pixelated; }
-        
-        .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: none; justify-content: space-between; pointer-events: none; z-index: 10; }
-        .hud.active { display: flex; }
-        .hud-box { background: linear-gradient(180deg, rgba(40,40,60,0.95), rgba(20,20,40,0.95)); padding: 10px 14px; border-radius: 12px; border: 2px solid #ffd700; color: white; font-size: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .pokemon-info { display: flex; align-items: center; gap: 10px; }
-        .pokemon-icon { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ffd700; object-fit: contain; background: rgba(255,255,255,0.1); }
-        .pokemon-name { color: #ffd700; font-size: 14px; }
-        .level-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 2px 8px; border-radius: 10px; font-size: 10px; margin-left: 5px; }
-        .bar { height: 12px; background: #333; border-radius: 6px; overflow: hidden; margin-top: 3px; width: 100px; }
-        .bar-fill { height: 100%; transition: width 0.3s; }
-        .hp-fill { background: linear-gradient(90deg, #4CAF50, #8BC34A); }
-        .hp-fill.low { background: linear-gradient(90deg, #ff6b6b, #ee5a6f); }
-        .exp-fill { background: linear-gradient(90deg, #3498db, #2980b9); }
-        .bar-label { font-size: 9px; display: flex; justify-content: space-between; }
-        
-        .joystick-container { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; z-index: 100; display: none; }
-        .joystick-container.active { display: block; }
-        .joystick-base { width: 100%; height: 100%; background: radial-gradient(circle, rgba(60,60,80,0.9), rgba(30,30,50,0.95)); border-radius: 50%; border: 4px solid rgba(255,215,0,0.5); box-shadow: 0 0 20px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; position: relative; }
-        .joystick-stick { width: 50px; height: 50px; background: radial-gradient(circle at 30% 30%, #888, #444); border-radius: 50%; border: 3px solid #666; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-        
-        /* 수정된 액션 버튼 - 화면 안에 맞게 배치 */
-        .action-buttons { position: absolute; bottom: 20px; right: 15px; display: none; z-index: 100; width: 140px; height: 140px; }
-        .action-buttons.active { display: block; }
-        .action-btn { width: 55px; height: 55px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); position: absolute; }
-        .action-btn:active { transform: scale(0.9); }
-        .action-btn .label { font-size: 8px; }
-        .btn-attack { background: linear-gradient(135deg, #e74c3c, #c0392b); bottom: 0; right: 0; }
-        .btn-skill1 { background: linear-gradient(135deg, #3498db, #2980b9); bottom: 0; left: 0; }
-        .btn-skill2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); top: 0; right: 0; }
-        .btn-dash { background: linear-gradient(135deg, #2ecc71, #27ae60); top: 0; left: 0; width: 50px; height: 50px; font-size: 18px; }
-        .cooldown { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; }
-        .cooldown.show { display: flex; }
-        
-        .menu-btn { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; background: rgba(40,40,60,0.9); border: 2px solid #ffd700; border-radius: 10px; display: none; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; z-index: 100; }
-        .menu-btn.active { display: flex; }
-        
-        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; overflow-y: auto; padding: 20px; }
-        .screen.active { display: flex; }
-        
-        /* 밝은 시작 화면 디자인 */
-        #startScreen { 
-            background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 50%, #86A8E7 100%); 
-            justify-content: flex-start; 
-            padding-top: 30px; 
-        }
-        .game-title { 
-            font-size: 1.8em; 
-            color: #2c3e50; 
-            text-shadow: 2px 2px 4px rgba(255,255,255,0.5); 
-            margin-bottom: 5px; 
-            background: linear-gradient(135deg, #f39c12, #e74c3c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: bold;
-        }
-        .game-subtitle { 
-            color: #34495e; 
-            font-size: 12px; 
-            margin-bottom: 15px; 
-            font-weight: bold;
-        }
-        
-        .pokemon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 350px; width: 100%; }
-        .pokemon-card { 
-            background: rgba(255,255,255,0.85); 
-            border-radius: 15px; 
-            padding: 12px; 
-            text-align: center; 
-            cursor: pointer; 
-            border: 3px solid transparent; 
-            transition: all 0.2s; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .pokemon-card:hover, .pokemon-card.selected { 
-            background: rgba(255,255,255,1); 
-            border-color: #f39c12; 
-            transform: translateY(-5px); 
-            box-shadow: 0 8px 25px rgba(243,156,18,0.3);
-        }
-        .pokemon-card img { width: 60px; height: 60px; object-fit: contain; }
-        .pokemon-card .name { color: #2c3e50; font-weight: bold; font-size: 13px; margin-top: 5px; }
-        .pokemon-card .type { color: #e74c3c; font-size: 11px; font-weight: bold; }
-        
-        .start-btn { 
-            margin-top: 20px; 
-            padding: 14px 45px; 
-            font-size: 1.1em; 
-            font-weight: bold; 
-            background: linear-gradient(135deg, #f39c12, #e74c3c); 
-            color: white; 
-            border: none; 
-            border-radius: 30px; 
-            cursor: pointer; 
-            box-shadow: 0 6px 20px rgba(243,156,18,0.4);
-            transition: all 0.2s;
-        }
-        .start-btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(243,156,18,0.5);
-        }
-        .start-btn:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; }
-        
-        #gameOverScreen, #pauseScreen { background: rgba(0,0,0,0.92); }
-        .popup-box { background: linear-gradient(180deg, rgba(40,40,60,0.98), rgba(20,20,40,0.98)); border: 3px solid #ffd700; border-radius: 20px; padding: 25px 35px; text-align: center; max-width: 320px; }
-        .popup-title { font-size: 1.8em; margin-bottom: 15px; }
-        .popup-title.gameover { color: #e74c3c; }
-        .popup-title.pause { color: #ffd700; }
-        .popup-stats { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-        .popup-stat { display: flex; justify-content: space-between; color: white; font-size: 13px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 8px; }
-        .popup-stat .value { color: #ffd700; font-weight: bold; }
-        .popup-buttons { display: flex; flex-direction: column; gap: 10px; }
-        .popup-btn { padding: 12px 25px; font-size: 1em; font-weight: bold; border: none; border-radius: 20px; cursor: pointer; }
-        .btn-primary { background: linear-gradient(135deg, #4CAF50, #45B649); color: white; }
-        .btn-secondary { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
-        .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
-        
-        .levelup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #ffd700, #ffb700); color: #000; padding: 15px 30px; border-radius: 15px; font-size: 1.3em; font-weight: bold; z-index: 150; display: none; animation: pop 0.5s ease-out; }
-        .levelup.show { display: block; }
-        @keyframes pop { 0% { transform: translate(-50%, -50%) scale(0); } 50% { transform: translate(-50%, -50%) scale(1.2); } 100% { transform: translate(-50%, -50%) scale(1); } }
-        
-        .boss-hp { position: absolute; bottom: 160px; left: 50%; transform: translateX(-50%); width: 70%; max-width: 350px; display: none; z-index: 80; }
-        .boss-hp.active { display: block; }
-        .boss-name { color: #ff6b6b; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 5px; text-shadow: 2px 2px 4px #000; }
-        .boss-bar { height: 16px; background: #333; border-radius: 8px; border: 2px solid #ff6b6b; overflow: hidden; }
-        .boss-bar-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #e74c3c); transition: width 0.3s; }
+        canvas { display: block; touch-action: none; }
+        .hud { position: absolute; top: 8px; left: 8px; z-index: 10; display: none; }
+        .hud.show { display: block; }
+        .hud-box { background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 10px; border: 2px solid #ffd700; color: #fff; font-size: 11px; }
+        .hud-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+        .hud-icon { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ffd700; }
+        .hud-name { color: #ffd700; font-weight: bold; }
+        .hud-lv { background: #c0392b; padding: 1px 6px; border-radius: 8px; font-size: 9px; margin-left: 4px; }
+        .bar { width: 70px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; }
+        .bar-hp { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .bar-mp { background: linear-gradient(90deg, #2980b9, #3498db); }
+        .bar-exp { background: linear-gradient(90deg, #8e44ad, #9b59b6); }
+        .hud-stats { display: flex; gap: 8px; margin-top: 4px; font-size: 10px; color: #aaa; }
+        .location { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 15px; border: 2px solid #ffd700; color: #ffd700; font-size: 12px; display: none; z-index: 10; }
+        .location.show { display: block; }
+        .joy-area { position: absolute; bottom: 20px; left: 20px; width: 110px; height: 110px; z-index: 100; display: none; }
+        .joy-area.show { display: block; }
+        .joy-base { width: 100%; height: 100%; background: rgba(50,50,70,0.8); border-radius: 50%; border: 3px solid rgba(255,215,0,0.4); position: relative; }
+        .joy-stick { width: 40px; height: 40px; background: radial-gradient(circle at 30% 30%, #777, #333); border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+        .btn-area { position: absolute; bottom: 20px; right: 12px; width: 120px; height: 120px; z-index: 100; display: none; }
+        .btn-area.show { display: block; }
+        .act-btn { position: absolute; width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
+        .act-btn:active { transform: scale(0.9); }
+        .btn-a { background: #c0392b; right: 0; bottom: 0; }
+        .btn-b { background: #2980b9; left: 0; bottom: 0; }
+        .btn-x { background: #f39c12; right: 0; top: 0; }
+        .btn-y { background: #27ae60; left: 0; top: 0; }
+        .cd { position: absolute; inset: 0; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 10px; }
+        .cd.show { display: flex; }
+        .menu-btn { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; background: rgba(0,0,0,0.8); border: 2px solid #ffd700; border-radius: 8px; display: none; align-items: center; justify-content: center; font-size: 18px; z-index: 100; }
+        .menu-btn.show { display: flex; }
+        .interact { position: absolute; bottom: 145px; left: 50%; transform: translateX(-50%); background: #8e44ad; padding: 8px 20px; border-radius: 15px; border: 2px solid #ffd700; color: #fff; font-size: 12px; display: none; z-index: 90; }
+        .interact.show { display: block; }
+        .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; padding: 15px; overflow-y: auto; }
+        .screen.show { display: flex; }
+        #startScreen { background: linear-gradient(135deg, #74ebd5, #ACB6E5); justify-content: flex-start; padding-top: 25px; }
+        .title { font-size: 1.5em; background: linear-gradient(135deg, #f39c12, #e74c3c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; margin-bottom: 3px; }
+        .subtitle { color: #34495e; font-size: 11px; margin-bottom: 12px; }
+        .poke-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 300px; width: 100%; }
+        .poke-card { background: rgba(255,255,255,0.9); border-radius: 10px; padding: 8px; text-align: center; border: 3px solid transparent; }
+        .poke-card.sel { border-color: #f39c12; transform: translateY(-3px); }
+        .poke-card img { width: 50px; height: 50px; }
+        .poke-card .name { color: #2c3e50; font-weight: bold; font-size: 11px; }
+        .poke-card .type { color: #e74c3c; font-size: 9px; }
+        .start-btn { margin-top: 15px; padding: 10px 35px; background: linear-gradient(135deg, #f39c12, #e74c3c); color: #fff; border: none; border-radius: 20px; font-weight: bold; }
+        .start-btn:disabled { background: #bdc3c7; }
+        .popup { background: rgba(0,0,0,0.9); }
+        .popup-box { background: linear-gradient(180deg, #2c3e50, #1a252f); border: 3px solid #ffd700; border-radius: 15px; padding: 20px; max-width: 320px; width: 90%; max-height: 75vh; overflow-y: auto; }
+        .popup-title { color: #ffd700; font-size: 1.2em; text-align: center; margin-bottom: 12px; border-bottom: 1px solid #ffd700; padding-bottom: 8px; }
+        .p-btn { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 8px; font-weight: bold; color: #fff; }
+        .p-btn.green { background: #27ae60; }
+        .p-btn.blue { background: #2980b9; }
+        .p-btn.red { background: #c0392b; }
+        .shop-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .shop-tab { flex: 1; padding: 6px; background: #34495e; border: none; border-radius: 6px; color: #aaa; font-size: 10px; }
+        .shop-tab.active { background: #f39c12; color: #000; }
+        .shop-list { max-height: 200px; overflow-y: auto; }
+        .shop-item { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 6px; }
+        .shop-item-icon { font-size: 24px; }
+        .shop-item-info { flex: 1; }
+        .shop-item-name { color: #fff; font-size: 11px; font-weight: bold; }
+        .shop-item-desc { color: #aaa; font-size: 9px; }
+        .shop-item-price { color: #ffd700; font-size: 10px; }
+        .buy-btn { background: #27ae60; border: none; padding: 4px 10px; border-radius: 4px; color: #fff; font-size: 10px; }
+        .buy-btn:disabled { background: #555; }
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+        .inv-slot { aspect-ratio: 1; background: rgba(255,255,255,0.1); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid transparent; position: relative; }
+        .inv-slot.sel { border-color: #ffd700; }
+        .inv-slot .cnt { position: absolute; bottom: 1px; right: 3px; font-size: 9px; color: #ffd700; }
+        .inv-detail { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; display: none; }
+        .inv-detail.show { display: block; }
+        .inv-btns { display: flex; gap: 6px; margin-top: 8px; }
+        .inv-btn { flex: 1; padding: 6px; border: none; border-radius: 4px; font-size: 10px; color: #fff; }
+        .inv-btn.use { background: #27ae60; }
+        .inv-btn.drop { background: #c0392b; }
+        .equip-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+        .equip-slot { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; text-align: center; }
+        .equip-slot-label { color: #aaa; font-size: 9px; }
+        .equip-slot-icon { font-size: 24px; margin: 4px 0; }
+        .equip-slot-name { color: #fff; font-size: 10px; }
+        .equip-stats { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; }
+        .equip-stat { display: flex; justify-content: space-between; color: #aaa; font-size: 10px; margin: 2px 0; }
+        .equip-stat span:last-child { color: #2ecc71; }
+        .dialog { position: absolute; bottom: 70px; left: 8px; right: 8px; background: rgba(0,0,0,0.95); border: 3px solid #ffd700; border-radius: 12px; padding: 12px; display: none; z-index: 150; }
+        .dialog.show { display: block; }
+        .dialog-name { color: #ffd700; font-weight: bold; margin-bottom: 6px; font-size: 12px; }
+        .dialog-text { color: #fff; font-size: 12px; line-height: 1.4; }
+        .dialog-opts { margin-top: 10px; }
+        .dialog-opt { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; color: #fff; border: none; width: 100%; text-align: left; font-size: 11px; margin-bottom: 5px; }
+        .dialog-opt:hover { background: rgba(255,215,0,0.3); }
+        .go-title { color: #c0392b; font-size: 1.5em; text-align: center; margin-bottom: 15px; }
+        .go-stats { margin-bottom: 15px; }
+        .go-stat { display: flex; justify-content: space-between; color: #fff; padding: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 4px 0; font-size: 12px; }
+        .go-stat span:last-child { color: #ffd700; }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    
+    <canvas id="c"></canvas>
     <div class="hud" id="hud">
         <div class="hud-box">
-            <div class="pokemon-info">
-                <img class="pokemon-icon" id="pokemonIcon" src="">
+            <div class="hud-row">
+                <img class="hud-icon" id="hudIcon">
                 <div>
-                    <div><span class="pokemon-name" id="pokemonName">피카츄</span><span class="level-badge">Lv.<span id="levelNum">1</span></span></div>
-                    <div class="bar-label"><span>HP</span><span id="hpText">100/100</span></div>
-                    <div class="bar"><div class="bar-fill hp-fill" id="hpFill" style="width:100%"></div></div>
-                    <div class="bar-label"><span>EXP</span><span id="expText">0/100</span></div>
-                    <div class="bar"><div class="bar-fill exp-fill" id="expFill" style="width:0%"></div></div>
+                    <div><span class="hud-name" id="hudName">-</span><span class="hud-lv">Lv.<span id="hudLv">1</span></span></div>
+                    <div class="hud-row"><span style="color:#2ecc71;font-size:9px">HP</span><div class="bar"><div class="bar-fill bar-hp" id="hudHp"></div></div></div>
+                    <div class="hud-row"><span style="color:#3498db;font-size:9px">MP</span><div class="bar"><div class="bar-fill bar-mp" id="hudMp"></div></div></div>
+                    <div class="hud-row"><span style="color:#9b59b6;font-size:9px">EXP</span><div class="bar"><div class="bar-fill bar-exp" id="hudExp"></div></div></div>
                 </div>
             </div>
-        </div>
-        <div class="hud-box">
-            <div>🌊 웨이브: <span id="waveNum">1</span></div>
-            <div>💀 처치: <span id="killCount">0</span></div>
-            <div style="margin-top:5px;">⚔️<span id="atkStat">10</span> 🛡️<span id="defStat">5</span></div>
+            <div class="hud-stats"><span>⚔️<span id="hudAtk">10</span></span><span>🛡️<span id="hudDef">5</span></span><span style="color:#ffd700">💰<span id="hudGold">0</span></span></div>
         </div>
     </div>
-    
+    <div class="location" id="loc">🏠 태초마을</div>
     <div class="menu-btn" id="menuBtn">☰</div>
-    
-    <div class="joystick-container" id="joystickContainer">
-        <div class="joystick-base" id="joystickBase">
-            <div class="joystick-stick" id="joystickStick"></div>
-        </div>
+    <div class="joy-area" id="joyArea"><div class="joy-base" id="joyBase"><div class="joy-stick" id="joyStick"></div></div></div>
+    <div class="btn-area" id="btnArea">
+        <div class="act-btn btn-a" id="btnA">⚡</div>
+        <div class="act-btn btn-b" id="btnB">✨<div class="cd" id="cdB"></div></div>
+        <div class="act-btn btn-x" id="btnX">💥<div class="cd" id="cdX"></div></div>
+        <div class="act-btn btn-y" id="btnY">💨<div class="cd" id="cdY"></div></div>
     </div>
-    
-    <div class="action-buttons" id="actionButtons">
-        <div class="action-btn btn-dash" id="btnDash"><span>💨</span><div class="cooldown" id="dashCD"></div></div>
-        <div class="action-btn btn-skill2" id="btnSkill2"><span>💥</span><span class="label">필살</span><div class="cooldown" id="skill2CD"></div></div>
-        <div class="action-btn btn-skill1" id="btnSkill1"><span>✨</span><span class="label">스킬</span><div class="cooldown" id="skill1CD"></div></div>
-        <div class="action-btn btn-attack" id="btnAttack"><span>⚡</span><span class="label">공격</span></div>
+    <div class="interact" id="interact">💬 대화하기</div>
+    <div class="dialog" id="dialog">
+        <div class="dialog-name" id="dName">???</div>
+        <div class="dialog-text" id="dText"></div>
+        <div class="dialog-opts" id="dOpts"></div>
     </div>
-    
-    <div class="boss-hp" id="bossHp">
-        <div class="boss-name" id="bossName">👑 보스</div>
-        <div class="boss-bar"><div class="boss-bar-fill" id="bossHpFill" style="width:100%"></div></div>
-    </div>
-    
-    <div class="levelup" id="levelup">⬆️ LEVEL UP!</div>
-    
-    <div class="screen active" id="startScreen">
-        <div class="game-title">🎮 정우의 포켓몬 RPG</div>
-        <div class="game-subtitle">Pokemon Roguelike Adventure</div>
-        <div class="pokemon-grid" id="pokemonGrid"></div>
+    <div class="screen show" id="startScreen">
+        <div class="title">🎮 정우의 포켓몬 RPG</div>
+        <div class="subtitle">Pokemon Adventure</div>
+        <div class="poke-grid" id="pokeGrid"></div>
         <button class="start-btn" id="startBtn" disabled>포켓몬을 선택하세요</button>
     </div>
-    
-    <div class="screen" id="pauseScreen">
+    <div class="screen popup" id="menuScreen">
         <div class="popup-box">
-            <div class="popup-title pause">⏸️ 일시정지</div>
-            <div class="popup-stats">
-                <div class="popup-stat"><span>레벨</span><span class="value" id="pauseLevel">1</span></div>
-                <div class="popup-stat"><span>웨이브</span><span class="value" id="pauseWave">1</span></div>
-                <div class="popup-stat"><span>처치</span><span class="value" id="pauseKills">0</span></div>
-            </div>
-            <div class="popup-buttons">
-                <button class="popup-btn btn-primary" id="resumeBtn">▶️ 계속하기</button>
-                <button class="popup-btn btn-secondary" id="changeCharBtn">🔄 캐릭터 변경</button>
-                <button class="popup-btn btn-danger" id="exitBtn">🚪 나가기</button>
-            </div>
+            <div class="popup-title">⏸️ 메뉴</div>
+            <button class="p-btn green" onclick="closeMenu()">▶️ 계속하기</button>
+            <button class="p-btn blue" onclick="openInv()">🎒 인벤토리</button>
+            <button class="p-btn blue" onclick="openEquip()">⚔️ 장비</button>
+            <button class="p-btn red" onclick="toTitle()">🚪 타이틀로</button>
         </div>
     </div>
-    
-    <div class="screen" id="gameOverScreen">
+    <div class="screen popup" id="shopScreen">
         <div class="popup-box">
-            <div class="popup-title gameover">💀 게임 오버</div>
-            <div class="popup-stats">
-                <div class="popup-stat"><span>최종 레벨</span><span class="value" id="finalLevel">1</span></div>
-                <div class="popup-stat"><span>최종 웨이브</span><span class="value" id="finalWave">1</span></div>
-                <div class="popup-stat"><span>총 처치</span><span class="value" id="finalKills">0</span></div>
-            </div>
-            <div class="popup-buttons">
-                <button class="popup-btn btn-primary" id="restartBtn">🔄 다시 시작</button>
-                <button class="popup-btn btn-secondary" id="changeCharBtn2">🎭 캐릭터 변경</button>
-                <button class="popup-btn btn-danger" id="exitBtn2">🚪 나가기</button>
-            </div>
+            <div class="popup-title">🏪 포켓몬 마트</div>
+            <div class="shop-tabs"><button class="shop-tab active" onclick="shopTab(0,this)">소비</button><button class="shop-tab" onclick="shopTab(1,this)">장비</button></div>
+            <div class="shop-list" id="shopList"></div>
+            <div style="text-align:center;color:#ffd700;margin:10px 0">💰 <span id="shopGold">0</span></div>
+            <button class="p-btn blue" onclick="closeShop()">닫기</button>
         </div>
     </div>
-
+    <div class="screen popup" id="invScreen">
+        <div class="popup-box">
+            <div class="popup-title">🎒 인벤토리</div>
+            <div class="inv-grid" id="invGrid"></div>
+            <div class="inv-detail" id="invDetail">
+                <div id="invName" style="color:#ffd700;font-weight:bold;font-size:12px"></div>
+                <div id="invDesc" style="color:#aaa;font-size:10px;margin:4px 0"></div>
+                <div class="inv-btns"><button class="inv-btn use" id="invUse">사용</button><button class="inv-btn drop" onclick="dropItem()">버리기</button></div>
+            </div>
+            <button class="p-btn blue" onclick="closeInv()">닫기</button>
+        </div>
+    </div>
+    <div class="screen popup" id="equipScreen">
+        <div class="popup-box">
+            <div class="popup-title">⚔️ 장비</div>
+            <div class="equip-slots" id="equipSlots"></div>
+            <div class="equip-stats" id="equipStats"></div>
+            <button class="p-btn blue" onclick="closeEquip()">닫기</button>
+        </div>
+    </div>
+    <div class="screen popup" id="goScreen">
+        <div class="popup-box">
+            <div class="go-title">💀 GAME OVER</div>
+            <div class="go-stats"><div class="go-stat"><span>레벨</span><span id="goLv">1</span></div><div class="go-stat"><span>처치</span><span id="goKills">0</span></div></div>
+            <button class="p-btn green" onclick="respawn()">🏠 마을 부활</button>
+            <button class="p-btn red" onclick="toTitle()">🚪 타이틀로</button>
+        </div>
+    </div>
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const C = document.getElementById('c'), X = C.getContext('2d');
+const resize = () => { C.width = innerWidth; C.height = innerHeight; };
+resize(); onresize = resize;
 
-const MAP = { width: 2000, height: 2000, tileSize: 32 };
-
-const POKEMON = {
-    pikachu: { id: 25, name: '피카츄', type: '전기', hp: 100, atk: 15, def: 8, spd: 5, color: '#f1c40f' },
-    charmander: { id: 4, name: '파이리', type: '불꽃', hp: 90, atk: 18, def: 6, spd: 4.5, color: '#e74c3c' },
-    squirtle: { id: 7, name: '꼬부기', type: '물', hp: 130, atk: 12, def: 12, spd: 3.8, color: '#3498db' },
-    bulbasaur: { id: 1, name: '이상해씨', type: '풀', hp: 115, atk: 14, def: 10, spd: 4, color: '#2ecc71' },
-    eevee: { id: 133, name: '이브이', type: '노말', hp: 105, atk: 14, def: 9, spd: 5.5, color: '#c8a87c' },
-    gengar: { id: 94, name: '팬텀', type: '고스트', hp: 85, atk: 20, def: 5, spd: 6, color: '#9b59b6' }
+const POKE = {
+    pikachu: { id: 25, name: '피카츄', type: '전기', hp: 100, mp: 50, atk: 15, def: 8, spd: 5, color: '#f1c40f' },
+    charmander: { id: 4, name: '파이리', type: '불꽃', hp: 90, mp: 60, atk: 18, def: 6, spd: 4.5, color: '#e74c3c' },
+    squirtle: { id: 7, name: '꼬부기', type: '물', hp: 130, mp: 40, atk: 12, def: 12, spd: 3.8, color: '#3498db' },
+    bulbasaur: { id: 1, name: '이상해씨', type: '풀', hp: 110, mp: 55, atk: 14, def: 10, spd: 4, color: '#2ecc71' },
+    eevee: { id: 133, name: '이브이', type: '노말', hp: 100, mp: 45, atk: 14, def: 9, spd: 5.5, color: '#c8a87c' },
+    gengar: { id: 94, name: '팬텀', type: '고스트', hp: 85, mp: 70, atk: 20, def: 5, spd: 6, color: '#9b59b6' }
+};
+const ENEMY = {
+    rattata: { id: 19, name: '꼬렛', hp: 35, atk: 6, def: 2, spd: 2, exp: 12, gold: 5 },
+    pidgey: { id: 16, name: '구구', hp: 40, atk: 7, def: 3, spd: 2.5, exp: 15, gold: 7 },
+    zubat: { id: 41, name: '주뱃', hp: 50, atk: 9, def: 3, spd: 3, exp: 20, gold: 10 },
+    geodude: { id: 74, name: '꼬마돌', hp: 70, atk: 12, def: 10, spd: 1.2, exp: 25, gold: 15 }
+};
+const ITEMS = {
+    potion: { name: '회복약', icon: '🧴', desc: 'HP 50 회복', price: 50, type: 'use', eff: { hp: 50 } },
+    superPotion: { name: '고급회복약', icon: '💊', desc: 'HP 100 회복', price: 120, type: 'use', eff: { hp: 100 } },
+    ether: { name: '이더', icon: '💧', desc: 'MP 30 회복', price: 80, type: 'use', eff: { mp: 30 } },
+    sword1: { name: '날카로운발톱', icon: '🗡️', desc: '공격력 +5', price: 200, type: 'weapon', stat: { atk: 5 } },
+    sword2: { name: '강철발톱', icon: '⚔️', desc: '공격력 +12', price: 500, type: 'weapon', stat: { atk: 12 } },
+    armor1: { name: '가죽조끼', icon: '🥋', desc: '방어력 +3', price: 150, type: 'armor', stat: { def: 3 } },
+    armor2: { name: '강철갑옷', icon: '🛡️', desc: '방어력 +8', price: 400, type: 'armor', stat: { def: 8 } }
+};
+const MAPS = {
+    town: { name: '태초마을', w: 800, h: 600, colors: ['#90d080', '#80c070'], enemies: false, npcs: [
+        { id: 'nurse', x: 400, y: 180, icon: '👩‍⚕️', name: '간호사 조이', type: 'heal' },
+        { id: 'shop', x: 200, y: 280, icon: '🧑‍💼', name: '상점 주인', type: 'shop' }
+    ], buildings: [{ x: 350, y: 80, w: 100, h: 80, color: '#e74c3c', icon: '🏥' }, { x: 150, y: 200, w: 100, h: 80, color: '#3498db', icon: '🏪' }],
+    portals: [{ x: 750, y: 250, w: 50, h: 100, to: 'route1', tx: 50, ty: 300, label: '1번도로 →' }] },
+    route1: { name: '1번도로', w: 1200, h: 800, colors: ['#88c070', '#78b060'], enemies: true, types: ['rattata', 'pidgey'], max: 8, rate: 3000, npcs: [], buildings: [], trees: 15,
+    portals: [{ x: 0, y: 250, w: 50, h: 100, to: 'town', tx: 700, ty: 300, label: '← 태초마을' }, { x: 1150, y: 350, w: 50, h: 100, to: 'route2', tx: 50, ty: 400, label: '2번도로 →' }] },
+    route2: { name: '2번도로', w: 1500, h: 1000, colors: ['#80a860', '#70984f'], enemies: true, types: ['pidgey', 'zubat', 'geodude'], max: 12, rate: 2500, npcs: [], buildings: [], trees: 25, rocks: 10,
+    portals: [{ x: 0, y: 350, w: 50, h: 100, to: 'route1', tx: 1100, ty: 400, label: '← 1번도로' }] }
 };
 
-const ENEMIES = {
-    rattata: { id: 19, name: '꼬렛', hp: 40, atk: 6, def: 2, spd: 2.5, exp: 15 },
-    pidgey: { id: 16, name: '구구', hp: 45, atk: 7, def: 3, spd: 3, exp: 18 },
-    zubat: { id: 41, name: '주뱃', hp: 50, atk: 8, def: 3, spd: 3.5, exp: 22 },
-    geodude: { id: 74, name: '꼬마돌', hp: 80, atk: 12, def: 8, spd: 1.5, exp: 30 },
-    machop: { id: 66, name: '알통몬', hp: 70, atk: 15, def: 5, spd: 2, exp: 35 },
-    gastly: { id: 92, name: '고오스', hp: 35, atk: 18, def: 2, spd: 4, exp: 40 }
-};
+let state = 'title', map = 'town', P = null, enemies = [], projs = [], parts = [], npcs = [], obs = [], portals = [], drops = [];
+let cam = { x: 0, y: 0 }, input = { mx: 0, my: 0, a: 0, b: 0, x: 0, y: 0 }, joy = { on: 0, id: null, cx: 0, cy: 0 };
+let cd = { a: 0, b: 0, x: 0, y: 0 }, inv = [], equip = { weapon: null, armor: null }, kills = 0, lt = 0, spawnT = 0;
+let nearNpc = null, nearPortal = null, selPoke = null, selInv = -1, shopMode = 0;
+const imgs = {};
 
-const BOSSES = {
-    onix: { id: 95, name: '롱스톤', hp: 500, atk: 25, def: 15, spd: 1.5, exp: 200 },
-    arbok: { id: 24, name: '아보크', hp: 400, atk: 30, def: 10, spd: 2.5, exp: 250 },
-    nidoking: { id: 34, name: '니드킹', hp: 600, atk: 35, def: 12, spd: 2, exp: 350 }
-};
+const spr = (id, back) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon${back ? '/back' : ''}/${id}.png`;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => Math.random() * (b - a) + a;
 
-let gameState = 'menu';
-let selectedPokemon = null;
-let player = null;
-let enemies = [];
-let projectiles = [];
-let particles = [];
-let items = [];
-let boss = null;
-let wave = 1, kills = 0, totalExp = 0;
-let camera = { x: 0, y: 0 };
-let imageCache = {};
-
-// 수정된 입력 상태 - 키보드용 별도 변수
-let input = { moveX: 0, moveY: 0, attack: false, skill1: false, skill2: false, dash: false };
-let keyState = { up: false, down: false, left: false, right: false };
-let joystick = { active: false, baseX: 0, baseY: 0, touchId: null };
-let cooldowns = { attack: 0, skill1: 0, skill2: 0, dash: 0 };
-
-function getSprite(id, type) {
-    const base = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
-    return type === 'back' ? `${base}/back/${id}.png` : `${base}/${id}.png`;
-}
-
-function loadImage(src) {
-    return new Promise(resolve => {
-        if (imageCache[src]) return resolve(imageCache[src]);
+async function loadImg(src) {
+    if (imgs[src]) return imgs[src];
+    return new Promise(r => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => { imageCache[src] = img; resolve(img); };
-        img.onerror = () => resolve(null);
+        img.onload = () => { imgs[src] = img; r(img); };
+        img.onerror = () => r(null);
         img.src = src;
     });
 }
 
-async function preloadImages() {
+async function preload() {
     const urls = [];
-    Object.values(POKEMON).forEach(p => { urls.push(getSprite(p.id, 'front'), getSprite(p.id, 'back')); });
-    Object.values(ENEMIES).forEach(e => { urls.push(getSprite(e.id, 'front'), getSprite(e.id, 'back')); });
-    Object.values(BOSSES).forEach(b => { urls.push(getSprite(b.id, 'front'), getSprite(b.id, 'back')); });
-    await Promise.all(urls.map(loadImage));
+    Object.values(POKE).forEach(p => { urls.push(spr(p.id), spr(p.id, 1)); });
+    Object.values(ENEMY).forEach(e => { urls.push(spr(e.id), spr(e.id, 1)); });
+    await Promise.all(urls.map(loadImg));
 }
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-
-function initPokemonSelection() {
-    const grid = document.getElementById('pokemonGrid');
-    grid.innerHTML = '';
-    Object.entries(POKEMON).forEach(([key, p]) => {
-        const card = document.createElement('div');
-        card.className = 'pokemon-card';
-        card.innerHTML = `<img src="${getSprite(p.id)}"><div class="name">${p.name}</div><div class="type">${p.type}</div>`;
-        card.onclick = () => {
-            document.querySelectorAll('.pokemon-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            selectedPokemon = key;
+function initSelect() {
+    const g = document.getElementById('pokeGrid');
+    g.innerHTML = '';
+    Object.entries(POKE).forEach(([k, p]) => {
+        const d = document.createElement('div');
+        d.className = 'poke-card';
+        d.innerHTML = `<img src="${spr(p.id)}"><div class="name">${p.name}</div><div class="type">${p.type}</div>`;
+        d.onclick = () => {
+            document.querySelectorAll('.poke-card').forEach(c => c.classList.remove('sel'));
+            d.classList.add('sel');
+            selPoke = k;
             document.getElementById('startBtn').disabled = false;
             document.getElementById('startBtn').textContent = '🎮 모험 시작!';
         };
-        grid.appendChild(card);
+        g.appendChild(d);
     });
-}
-
-function showUI(show) {
-    document.getElementById('startScreen').classList.toggle('active', !show);
-    document.getElementById('hud').classList.toggle('active', show);
-    document.getElementById('joystickContainer').classList.toggle('active', show);
-    document.getElementById('actionButtons').classList.toggle('active', show);
-    document.getElementById('menuBtn').classList.toggle('active', show);
-    document.getElementById('gameOverScreen').classList.remove('active');
-    document.getElementById('pauseScreen').classList.remove('active');
 }
 
 function startGame() {
-    if (!selectedPokemon) return;
-    const data = POKEMON[selectedPokemon];
-    
-    player = {
-        x: MAP.width / 2, y: MAP.height / 2,
-        width: 64, height: 64,
-        hp: data.hp, maxHp: data.hp,
-        atk: data.atk, def: data.def, spd: data.spd,
-        level: 1, exp: 0, expToNext: 100,
-        direction: 'down', pokemonId: data.id,
-        name: data.name, color: data.color,
-        invulnerable: 0, isDashing: false, dashTime: 0
-    };
-    
-    enemies = []; projectiles = []; particles = []; items = []; boss = null;
-    wave = 1; kills = 0; totalExp = 0;
-    cooldowns = { attack: 0, skill1: 0, skill2: 0, dash: 0 };
-    keyState = { up: false, down: false, left: false, right: false };
-    input = { moveX: 0, moveY: 0, attack: false, skill1: false, skill2: false, dash: false };
-    
-    gameState = 'playing';
-    showUI(true);
+    if (!selPoke) return;
+    const d = POKE[selPoke];
+    P = { x: 400, y: 400, w: 48, h: 48, hp: d.hp, maxHp: d.hp, mp: d.mp, maxMp: d.mp, atk: d.atk, def: d.def, spd: d.spd,
+        baseAtk: d.atk, baseDef: d.def, baseSpd: d.spd, baseHp: d.hp, lv: 1, exp: 0, expNext: 100, gold: 100,
+        pid: d.id, name: d.name, color: d.color, dir: 'down', inv: 0, dash: 0, dashT: 0 };
+    inv = [{ id: 'potion', n: 3 }];
+    equip = { weapon: null, armor: null };
+    kills = 0;
+    loadMap('town');
+    state = 'play';
+    document.getElementById('startScreen').classList.remove('show');
+    showUI(1);
     updateHUD();
-    spawnWave();
-    lastTime = performance.now();
-    requestAnimationFrame(gameLoop);
+    lt = performance.now();
+    requestAnimationFrame(loop);
 }
 
-function spawnWave() {
-    if (wave % 5 === 0) {
-        spawnBoss();
-        return;
-    }
-    
-    const count = Math.min(5 + wave * 2, 20);
-    const keys = Object.keys(ENEMIES);
-    const mult = 1 + (wave - 1) * 0.15;
-    
-    for (let i = 0; i < count; i++) {
-        setTimeout(() => {
-            if (gameState !== 'playing') return;
-            const key = keys[Math.floor(Math.random() * Math.min(2 + Math.floor(wave/2), keys.length))];
-            const data = ENEMIES[key];
-            
-            let x, y;
-            do {
-                const edge = Math.floor(Math.random() * 4);
-                if (edge === 0) { x = Math.random() * MAP.width; y = camera.y - 50; }
-                else if (edge === 1) { x = Math.random() * MAP.width; y = camera.y + canvas.height + 50; }
-                else if (edge === 2) { x = camera.x - 50; y = Math.random() * MAP.height; }
-                else { x = camera.x + canvas.width + 50; y = Math.random() * MAP.height; }
-                x = Math.max(50, Math.min(MAP.width - 50, x));
-                y = Math.max(50, Math.min(MAP.height - 50, y));
-            } while (Math.hypot(x - player.x, y - player.y) < 150);
-            
-            enemies.push({
-                x, y, width: 48, height: 48,
-                hp: Math.floor(data.hp * mult), maxHp: Math.floor(data.hp * mult),
-                atk: Math.floor(data.atk * mult), def: data.def,
-                spd: data.spd + wave * 0.05, exp: Math.floor(data.exp * mult),
-                pokemonId: data.id, name: data.name, direction: 'down',
-                attackCooldown: 0, hitFlash: 0
-            });
-        }, i * 400);
-    }
+function showUI(s) {
+    ['hud', 'loc', 'joyArea', 'btnArea', 'menuBtn'].forEach(id => document.getElementById(id).classList.toggle('show', s));
 }
 
-function spawnBoss() {
-    const keys = Object.keys(BOSSES);
-    const key = keys[Math.floor((wave / 5 - 1) % keys.length)];
-    const data = BOSSES[key];
-    const mult = 1 + Math.floor(wave / 5) * 0.3;
-    
-    boss = {
-        x: MAP.width / 2, y: MAP.height / 2 - 200,
-        width: 96, height: 96,
-        hp: Math.floor(data.hp * mult), maxHp: Math.floor(data.hp * mult),
-        atk: Math.floor(data.atk * mult), def: data.def,
-        spd: data.spd, exp: Math.floor(data.exp * mult),
-        pokemonId: data.id, name: data.name, direction: 'down',
-        attackCooldown: 0, hitFlash: 0, specialCooldown: 120
-    };
-    
-    document.getElementById('bossHp').classList.add('active');
-    document.getElementById('bossName').textContent = `👑 ${boss.name}`;
-    updateBossHP();
+function loadMap(m) {
+    map = m;
+    const M = MAPS[m];
+    document.getElementById('loc').textContent = (M.enemies ? '⚔️ ' : '🏠 ') + M.name;
+    enemies = []; projs = []; parts = []; npcs = []; obs = []; portals = []; drops = []; spawnT = 0;
+    if (M.npcs) M.npcs.forEach(n => npcs.push({ ...n, w: 40, h: 40 }));
+    if (M.buildings) M.buildings.forEach(b => obs.push({ ...b, type: 'bld' }));
+    if (M.trees) for (let i = 0; i < M.trees; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 40, h: 40, type: 'tree' });
+    if (M.rocks) for (let i = 0; i < M.rocks; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 35, h: 35, type: 'rock' });
+    if (M.portals) portals = M.portals.map(p => ({ ...p }));
 }
 
-function updateBossHP() {
-    if (!boss) return;
-    const pct = Math.max(0, boss.hp / boss.maxHp * 100);
-    document.getElementById('bossHpFill').style.width = pct + '%';
+function loop(t) {
+    if (state !== 'play') return;
+    const dt = Math.min((t - lt) / 1000, 0.1);
+    lt = t;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
 }
 
-function checkWaveComplete() {
-    if (enemies.length === 0 && !boss) {
-        wave++;
-        player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.1));
-        setTimeout(() => { if (gameState === 'playing') spawnWave(); }, 2000);
-    }
+function update(dt) {
+    const M = MAPS[map];
+    updatePlayer(dt, M);
+    updateEnemies(dt);
+    updateProjs(dt, M);
+    updateParts(dt);
+    if (M.enemies) spawnEnemies(dt, M);
+    checkInteract();
+    updateCam(M);
+    updateCD();
+    updateHUD();
 }
 
-// 수정된 키보드 입력 처리
-function updateKeyboardInput() {
-    let kx = 0, ky = 0;
-    if (keyState.left) kx -= 1;
-    if (keyState.right) kx += 1;
-    if (keyState.up) ky -= 1;
-    if (keyState.down) ky += 1;
+function updatePlayer(dt, M) {
+    if (P.dash) { P.dashT -= dt; if (P.dashT <= 0) P.dash = 0; }
     
-    // 조이스틱이 활성화되어 있지 않을 때만 키보드 입력 적용
-    if (!joystick.active) {
-        input.moveX = kx;
-        input.moveY = ky;
-    }
-}
-
-function updatePlayer(dt) {
-    if (gameState !== 'playing') return;
-    
-    // 키보드 입력 업데이트
-    updateKeyboardInput();
-    
-    if (player.isDashing) {
-        player.dashTime -= dt;
-        if (player.dashTime <= 0) player.isDashing = false;
-    }
-    
-    let mx = input.moveX, my = input.moveY;
-    if (mx !== 0 || my !== 0) {
+    let mx = input.mx, my = input.my;
+    if (mx || my) {
         const len = Math.hypot(mx, my);
         if (len > 0) { mx /= len; my /= len; }
         
-        // 수정된 방향 설정 - 이동 방향과 일치하도록
+        // 방향 설정 - 수정됨
         if (Math.abs(mx) > Math.abs(my)) {
-            player.direction = mx < 0 ? 'left' : 'right';  // 수정: 부호 반대로
-        } else {
-            player.direction = my < 0 ? 'up' : 'down';  // 수정: 부호 반대로
+            P.dir = mx < 0 ? 'left' : 'right';
+        } else if (Math.abs(my) > 0.1) {
+            P.dir = my < 0 ? 'up' : 'down';
         }
         
-        const speed = player.isDashing ? player.spd * 3 : player.spd;
-        player.x += mx * speed * dt * 60;
-        player.y += my * speed * dt * 60;
-    }
-    
-    player.x = Math.max(player.width/2, Math.min(MAP.width - player.width/2, player.x));
-    player.y = Math.max(player.height/2, Math.min(MAP.height - player.height/2, player.y));
-    
-    if (player.invulnerable > 0) player.invulnerable -= dt * 60;
-    
-    Object.keys(cooldowns).forEach(k => { if (cooldowns[k] > 0) cooldowns[k] -= dt * 60; });
-    
-    if (input.attack && cooldowns.attack <= 0) {
-        fireAttack();
-        cooldowns.attack = 12;
-    }
-    if (input.skill1 && cooldowns.skill1 <= 0) {
-        fireSkill1();
-        cooldowns.skill1 = 180;
-    }
-    if (input.skill2 && cooldowns.skill2 <= 0) {
-        fireSkill2();
-        cooldowns.skill2 = 480;
-    }
-    if (input.dash && cooldowns.dash <= 0 && !player.isDashing) {
-        player.isDashing = true;
-        player.dashTime = 0.15;
-        player.invulnerable = Math.max(player.invulnerable, 15);
-        cooldowns.dash = 90;
-        for (let i = 0; i < 8; i++) {
-            particles.push({ x: player.x, y: player.y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4, life: 15, color: player.color, size: 5 });
-        }
-    }
-    
-    updateCooldownUI();
-}
-
-function getDir() {
-    const dirs = { up: {x:0,y:-1}, down: {x:0,y:1}, left: {x:-1,y:0}, right: {x:1,y:0} };
-    return dirs[player.direction];
-}
-
-function fireAttack() {
-    const d = getDir();
-    projectiles.push({
-        x: player.x + d.x * 30, y: player.y + d.y * 30,
-        vx: d.x * 12, vy: d.y * 12,
-        damage: player.atk, size: 10, color: player.color,
-        owner: 'player', life: 60
-    });
-    for (let i = 0; i < 4; i++) {
-        particles.push({ x: player.x + d.x*20, y: player.y + d.y*20, vx: d.x*2+(Math.random()-0.5)*2, vy: d.y*2+(Math.random()-0.5)*2, life: 10, color: player.color, size: 3 });
-    }
-}
-
-function fireSkill1() {
-    for (let i = 0; i < 8; i++) {
-        const ang = (i/8) * Math.PI * 2;
-        projectiles.push({
-            x: player.x, y: player.y,
-            vx: Math.cos(ang) * 8, vy: Math.sin(ang) * 8,
-            damage: Math.floor(player.atk * 1.5), size: 12, color: '#3498db',
-            owner: 'player', life: 60
+        const spd = P.dash ? P.spd * 3 : P.spd;
+        const nx = P.x + mx * spd * dt * 60;
+        const ny = P.y + my * spd * dt * 60;
+        
+        let ok = 1;
+        obs.forEach(o => {
+            if (nx > o.x - P.w/2 && nx < o.x + o.w + P.w/2 && ny > o.y - P.h/2 && ny < o.y + o.h + P.h/2) ok = 0;
         });
-    }
-    for (let i = 0; i < 12; i++) {
-        particles.push({ x: player.x, y: player.y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 20, color: '#3498db', size: 5 });
-    }
-}
-
-function fireSkill2() {
-    const radius = 150;
-    enemies.forEach(e => {
-        if (Math.hypot(e.x - player.x, e.y - player.y) < radius) {
-            damageEnemy(e, Math.floor(player.atk * 3));
+        if (ok) {
+            P.x = clamp(nx, P.w/2, M.w - P.w/2);
+            P.y = clamp(ny, P.h/2, M.h - P.h/2);
         }
-    });
-    if (boss && Math.hypot(boss.x - player.x, boss.y - player.y) < radius) {
-        damageBoss(Math.floor(player.atk * 3));
     }
-    for (let i = 0; i < 30; i++) {
-        const ang = (i/30) * Math.PI * 2;
-        const dist = Math.random() * radius;
-        particles.push({ x: player.x + Math.cos(ang)*dist, y: player.y + Math.sin(ang)*dist, vx: Math.cos(ang)*4, vy: Math.sin(ang)*4, life: 30, color: '#ffd700', size: 7 });
+    
+    if (P.inv > 0) P.inv -= dt * 60;
+    Object.keys(cd).forEach(k => { if (cd[k] > 0) cd[k] -= dt * 60; });
+    
+    if (input.a && cd.a <= 0 && M.enemies) { fireAtk(); cd.a = 15; }
+    if (input.b && cd.b <= 0 && P.mp >= 10 && M.enemies) { fireSkill(); cd.b = 180; P.mp -= 10; }
+    if (input.x && cd.x <= 0 && P.mp >= 25 && M.enemies) { fireSpecial(); cd.x = 300; P.mp -= 25; }
+    if (input.y && cd.y <= 0 && !P.dash) { P.dash = 1; P.dashT = 0.15; P.inv = Math.max(P.inv, 15); cd.y = 90; spawnParts(P.x, P.y, P.color, 8); }
+    
+    drops = drops.filter(d => {
+        if (dist(P, d) < 40) { addInv(d.id); spawnParts(d.x, d.y, '#ffd700', 5); return 0; }
+        return 1;
+    });
+}
+
+function fireAtk() {
+    const dirs = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+    const d = dirs[P.dir];
+    projs.push({ x: P.x + d.x * 25, y: P.y + d.y * 25, vx: d.x * 10, vy: d.y * 10, dmg: P.atk, sz: 8, color: P.color, own: 'p', life: 50 });
+    spawnParts(P.x + d.x * 20, P.y + d.y * 20, P.color, 3);
+}
+
+function fireSkill() {
+    for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        projs.push({ x: P.x, y: P.y, vx: Math.cos(a) * 7, vy: Math.sin(a) * 7, dmg: Math.floor(P.atk * 1.5), sz: 10, color: '#3498db', own: 'p', life: 50 });
+    }
+    spawnParts(P.x, P.y, '#3498db', 10);
+}
+
+function fireSpecial() {
+    const r = 120;
+    enemies.forEach(e => { if (dist(e, P) < r) dmgEnemy(e, Math.floor(P.atk * 3)); });
+    for (let i = 0; i < 20; i++) {
+        const a = (i / 20) * Math.PI * 2;
+        parts.push({ x: P.x + Math.cos(a) * rand(20, r), y: P.y + Math.sin(a) * rand(20, r), vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 30, color: '#ffd700', sz: 6 });
     }
 }
 
-function updateCooldownUI() {
-    const skill1CD = document.getElementById('skill1CD');
-    const skill2CD = document.getElementById('skill2CD');
-    const dashCD = document.getElementById('dashCD');
-    
-    if (cooldowns.skill1 > 0) {
-        skill1CD.classList.add('show');
-        skill1CD.textContent = Math.ceil(cooldowns.skill1 / 60);
-    } else {
-        skill1CD.classList.remove('show');
-    }
-    
-    if (cooldowns.skill2 > 0) {
-        skill2CD.classList.add('show');
-        skill2CD.textContent = Math.ceil(cooldowns.skill2 / 60);
-    } else {
-        skill2CD.classList.remove('show');
-    }
-    
-    if (cooldowns.dash > 0) {
-        dashCD.classList.add('show');
-        dashCD.textContent = Math.ceil(cooldowns.dash / 60);
-    } else {
-        dashCD.classList.remove('show');
+function spawnEnemies(dt, M) {
+    spawnT += dt * 1000;
+    if (spawnT > M.rate && enemies.length < M.max) {
+        spawnT = 0;
+        const type = M.types[Math.floor(Math.random() * M.types.length)];
+        const d = ENEMY[type];
+        const mult = 1 + P.lv * 0.1;
+        let x, y;
+        do { x = rand(50, M.w - 50); y = rand(50, M.h - 50); } while (dist({ x, y }, P) < 200);
+        enemies.push({ x, y, w: 40, h: 40, hp: Math.floor(d.hp * mult), maxHp: Math.floor(d.hp * mult), atk: Math.floor(d.atk * mult), def: d.def, spd: d.spd, exp: d.exp, gold: d.gold, pid: d.id, name: d.name, dir: 'down', atkCd: 0, hit: 0 });
     }
 }
 
 function updateEnemies(dt) {
-    enemies.forEach(enemy => {
-        if (enemy.hitFlash > 0) enemy.hitFlash -= dt * 60;
-        
-        const dx = player.x - enemy.x;
-        const dy = player.y - enemy.y;
-        const dist = Math.hypot(dx, dy);
-        
-        if (dist > 35) {
-            enemy.x += (dx / dist) * enemy.spd * dt * 60;
-            enemy.y += (dy / dist) * enemy.spd * dt * 60;
-            
-            // 수정된 적 방향 설정
-            if (Math.abs(dx) > Math.abs(dy)) {
-                enemy.direction = dx < 0 ? 'left' : 'right';
-            } else {
-                enemy.direction = dy < 0 ? 'up' : 'down';
-            }
+    enemies.forEach(e => {
+        if (e.hit > 0) e.hit -= dt * 60;
+        const dx = P.x - e.x, dy = P.y - e.y, d = Math.hypot(dx, dy);
+        if (d > 30) {
+            e.x += (dx / d) * e.spd * dt * 60;
+            e.y += (dy / d) * e.spd * dt * 60;
+            if (Math.abs(dx) > Math.abs(dy)) e.dir = dx < 0 ? 'left' : 'right';
+            else e.dir = dy < 0 ? 'up' : 'down';
         }
-        
-        if (dist < 40 && player.invulnerable <= 0 && enemy.attackCooldown <= 0) {
-            const dmg = Math.max(1, enemy.atk - player.def);
-            player.hp -= dmg;
-            player.invulnerable = 45;
-            enemy.attackCooldown = 60;
-            player.x -= (dx / dist) * 25;
-            player.y -= (dy / dist) * 25;
-            
-            for (let i = 0; i < 6; i++) {
-                particles.push({ x: player.x, y: player.y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 15, color: '#ff0000', size: 4 });
-            }
-            
-            if (player.hp <= 0) gameOver();
+        if (d < 35 && P.inv <= 0 && e.atkCd <= 0) {
+            const dmg = Math.max(1, e.atk - P.def);
+            P.hp -= dmg;
+            P.inv = 45;
+            e.atkCd = 60;
+            P.x -= (dx / d) * 20;
+            P.y -= (dy / d) * 20;
+            spawnParts(P.x, P.y, '#e74c3c', 6);
+            if (P.hp <= 0) gameOver();
         }
-        
-        if (enemy.attackCooldown > 0) enemy.attackCooldown -= dt * 60;
+        if (e.atkCd > 0) e.atkCd -= dt * 60;
     });
 }
 
-function updateBoss(dt) {
-    if (!boss) return;
-    if (boss.hitFlash > 0) boss.hitFlash -= dt * 60;
-    
-    const dx = player.x - boss.x;
-    const dy = player.y - boss.y;
-    const dist = Math.hypot(dx, dy);
-    
-    if (dist > 60) {
-        boss.x += (dx / dist) * boss.spd * dt * 60;
-        boss.y += (dy / dist) * boss.spd * dt * 60;
-        
-        // 수정된 보스 방향 설정
-        if (Math.abs(dx) > Math.abs(dy)) {
-            boss.direction = dx < 0 ? 'left' : 'right';
-        } else {
-            boss.direction = dy < 0 ? 'up' : 'down';
-        }
-    }
-    
-    if (dist < 70 && player.invulnerable <= 0 && boss.attackCooldown <= 0) {
-        const dmg = Math.max(1, boss.atk - player.def);
-        player.hp -= dmg;
-        player.invulnerable = 60;
-        boss.attackCooldown = 90;
-        player.x -= (dx / dist) * 40;
-        player.y -= (dy / dist) * 40;
-        if (player.hp <= 0) gameOver();
-    }
-    
-    if (boss.specialCooldown <= 0) {
-        for (let i = 0; i < 8; i++) {
-            const ang = (i/8) * Math.PI * 2;
-            projectiles.push({
-                x: boss.x, y: boss.y, vx: Math.cos(ang) * 5, vy: Math.sin(ang) * 5,
-                damage: boss.atk, size: 15, color: '#e74c3c', owner: 'enemy', life: 120
-            });
-        }
-        boss.specialCooldown = 180;
-    }
-    
-    if (boss.attackCooldown > 0) boss.attackCooldown -= dt * 60;
-    if (boss.specialCooldown > 0) boss.specialCooldown -= dt * 60;
-}
-
-function damageEnemy(enemy, damage) {
-    const dmg = Math.max(1, damage - enemy.def);
-    enemy.hp -= dmg;
-    enemy.hitFlash = 10;
-    
-    if (enemy.hp <= 0) {
-        const idx = enemies.indexOf(enemy);
-        if (idx > -1) enemies.splice(idx, 1);
+function dmgEnemy(e, dmg) {
+    const d = Math.max(1, dmg - e.def);
+    e.hp -= d;
+    e.hit = 10;
+    if (e.hp <= 0) {
         kills++;
-        gainExp(enemy.exp);
-        
-        for (let i = 0; i < 10; i++) {
-            particles.push({ x: enemy.x, y: enemy.y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 25, color: '#ffd700', size: 5 });
-        }
-        
-        if (Math.random() < 0.15) spawnItem(enemy.x, enemy.y);
-        checkWaveComplete();
+        gainExp(e.exp);
+        P.gold += e.gold;
+        if (Math.random() < 0.2) drops.push({ x: e.x, y: e.y, id: ['potion', 'ether'][Math.floor(Math.random() * 2)] });
+        spawnParts(e.x, e.y, '#ffd700', 12);
+        enemies = enemies.filter(en => en !== e);
     }
 }
 
-function damageBoss(damage) {
-    if (!boss) return;
-    const dmg = Math.max(1, damage - boss.def);
-    boss.hp -= dmg;
-    boss.hitFlash = 10;
-    updateBossHP();
-    
-    if (boss.hp <= 0) {
-        kills++;
-        gainExp(boss.exp);
-        
-        for (let i = 0; i < 30; i++) {
-            particles.push({ x: boss.x, y: boss.y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 40, color: '#ffd700', size: 8 });
-        }
-        
-        for (let i = 0; i < 3; i++) spawnItem(boss.x + (Math.random()-0.5)*100, boss.y + (Math.random()-0.5)*100);
-        
-        document.getElementById('bossHp').classList.remove('active');
-        boss = null;
-        checkWaveComplete();
+function gainExp(n) {
+    P.exp += n;
+    while (P.exp >= P.expNext) {
+        P.exp -= P.expNext;
+        P.lv++;
+        P.expNext = Math.floor(100 * Math.pow(1.25, P.lv - 1));
+        P.baseHp += 10; P.baseAtk += 2; P.baseDef += 1;
+        recalc();
+        P.hp = P.maxHp; P.mp = P.maxMp;
+        spawnParts(P.x, P.y, '#ffd700', 20);
     }
 }
 
-function gainExp(amount) {
-    player.exp += amount;
-    totalExp += amount;
-    while (player.exp >= player.expToNext) levelUp();
-    updateHUD();
+function recalc() {
+    P.maxHp = P.baseHp;
+    P.atk = P.baseAtk + (equip.weapon?.stat?.atk || 0);
+    P.def = P.baseDef + (equip.armor?.stat?.def || 0);
 }
 
-function levelUp() {
-    player.exp -= player.expToNext;
-    player.level++;
-    player.expToNext = Math.floor(100 * Math.pow(1.2, player.level - 1));
-    
-    const hpUp = 10 + player.level * 2;
-    const atkUp = 2 + Math.floor(player.level / 2);
-    const defUp = 1 + Math.floor(player.level / 3);
-    
-    player.maxHp += hpUp;
-    player.hp = Math.min(player.maxHp, player.hp + Math.floor(hpUp / 2));
-    player.atk += atkUp;
-    player.def += defUp;
-    
-    const lvlup = document.getElementById('levelup');
-    lvlup.classList.add('show');
-    setTimeout(() => lvlup.classList.remove('show'), 2000);
-    
-    for (let i = 0; i < 20; i++) {
-        const ang = (i/20) * Math.PI * 2;
-        particles.push({ x: player.x, y: player.y, vx: Math.cos(ang)*4, vy: Math.sin(ang)*4, life: 30, color: '#ffd700', size: 6 });
-    }
-}
-
-function spawnItem(x, y) {
-    const types = ['heal', 'atkUp', 'exp'];
-    items.push({ x, y, type: types[Math.floor(Math.random() * types.length)], life: 600 });
-}
-
-function updateItems(dt) {
-    items = items.filter(item => {
-        item.life -= dt * 60;
-        if (Math.hypot(item.x - player.x, item.y - player.y) < 40) {
-            if (item.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.3));
-            else if (item.type === 'atkUp') player.atk += 3;
-            else if (item.type === 'exp') gainExp(50);
-            updateHUD();
-            return false;
-        }
-        return item.life > 0;
-    });
-}
-
-function updateProjectiles(dt) {
-    projectiles = projectiles.filter(p => {
+function updateProjs(dt, M) {
+    projs = projs.filter(p => {
         p.x += p.vx * dt * 60;
         p.y += p.vy * dt * 60;
         p.life -= dt * 60;
-        
-        if (p.x < 0 || p.x > MAP.width || p.y < 0 || p.y > MAP.height || p.life <= 0) return false;
-        
-        if (p.owner === 'player') {
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                if (Math.hypot(p.x - enemies[i].x, p.y - enemies[i].y) < enemies[i].width/2 + p.size) {
-                    damageEnemy(enemies[i], p.damage);
-                    return false;
-                }
-            }
-            if (boss && Math.hypot(p.x - boss.x, p.y - boss.y) < boss.width/2 + p.size) {
-                damageBoss(p.damage);
-                return false;
+        if (p.x < 0 || p.x > M.w || p.y < 0 || p.y > M.h || p.life <= 0) return 0;
+        if (p.own === 'p') {
+            for (let e of enemies) {
+                if (dist(p, e) < e.w / 2 + p.sz) { dmgEnemy(e, p.dmg); spawnParts(p.x, p.y, '#fff', 3); return 0; }
             }
         } else {
-            if (player.invulnerable <= 0 && Math.hypot(p.x - player.x, p.y - player.y) < player.width/2 + p.size) {
-                const dmg = Math.max(1, p.damage - player.def);
-                player.hp -= dmg;
-                player.invulnerable = 45;
-                if (player.hp <= 0) gameOver();
-                return false;
+            if (P.inv <= 0 && dist(p, P) < P.w / 2 + p.sz) {
+                const dmg = Math.max(1, p.dmg - P.def);
+                P.hp -= dmg; P.inv = 45;
+                spawnParts(P.x, P.y, '#e74c3c', 5);
+                if (P.hp <= 0) gameOver();
+                return 0;
             }
         }
-        return true;
+        return 1;
     });
 }
 
-function updateParticles(dt) {
-    particles = particles.filter(p => {
-        p.x += p.vx * dt * 60;
-        p.y += p.vy * dt * 60;
-        p.vx *= 0.95;
-        p.vy *= 0.95;
-        p.life -= dt * 60;
-        return p.life > 0;
-    });
+function spawnParts(x, y, color, n) {
+    for (let i = 0; i < n; i++) parts.push({ x, y, vx: rand(-4, 4), vy: rand(-4, 4), life: rand(15, 25), color, sz: rand(3, 6) });
 }
 
-function updateCamera() {
-    const tx = player.x - canvas.width / 2;
-    const ty = player.y - canvas.height / 2;
-    camera.x += (tx - camera.x) * 0.1;
-    camera.y += (ty - camera.y) * 0.1;
-    camera.x = Math.max(0, Math.min(MAP.width - canvas.width, camera.x));
-    camera.y = Math.max(0, Math.min(MAP.height - canvas.height, camera.y));
+function updateParts(dt) {
+    parts = parts.filter(p => { p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vx *= 0.95; p.vy *= 0.95; p.life -= dt * 60; return p.life > 0; });
 }
 
-function updateHUD() {
-    document.getElementById('pokemonName').textContent = player.name;
-    document.getElementById('pokemonIcon').src = getSprite(player.pokemonId);
-    document.getElementById('levelNum').textContent = player.level;
-    document.getElementById('hpText').textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
-    document.getElementById('hpFill').style.width = Math.max(0, player.hp / player.maxHp * 100) + '%';
-    document.getElementById('hpFill').classList.toggle('low', player.hp / player.maxHp < 0.3);
-    document.getElementById('expText').textContent = `${player.exp}/${player.expToNext}`;
-    document.getElementById('expFill').style.width = (player.exp / player.expToNext * 100) + '%';
-    document.getElementById('waveNum').textContent = wave;
-    document.getElementById('killCount').textContent = kills;
-    document.getElementById('atkStat').textContent = player.atk;
-    document.getElementById('defStat').textContent = player.def;
+function checkInteract() {
+    nearNpc = null; nearPortal = null;
+    npcs.forEach(n => { if (dist(P, n) < 50) nearNpc = n; });
+    portals.forEach(p => { if (P.x > p.x && P.x < p.x + p.w && P.y > p.y && P.y < p.y + p.h) nearPortal = p; });
+    const btn = document.getElementById('interact');
+    if (nearNpc) { btn.textContent = `💬 ${nearNpc.name}`; btn.classList.add('show'); }
+    else if (nearPortal) { btn.textContent = `🚪 ${nearPortal.label}`; btn.classList.add('show'); }
+    else btn.classList.remove('show');
 }
 
-function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-    
-    // 배경
-    const ts = MAP.tileSize;
-    const sx = Math.floor(camera.x / ts) * ts;
-    const sy = Math.floor(camera.y / ts) * ts;
-    for (let x = sx; x < sx + canvas.width + ts*2 && x < MAP.width; x += ts) {
-        for (let y = sy; y < sy + canvas.height + ts*2 && y < MAP.height; y += ts) {
-            ctx.fillStyle = ((x/ts + y/ts) % 2 === 0) ? '#88c070' : '#78b060';
-            ctx.fillRect(x, y, ts, ts);
-        }
+function interact() {
+    if (nearNpc) startDialog(nearNpc);
+    else if (nearPortal) { P.x = nearPortal.tx; P.y = nearPortal.ty; loadMap(nearPortal.to); }
+}
+
+function startDialog(n) {
+    state = 'dialog';
+    const d = document.getElementById('dialog');
+    const name = document.getElementById('dName');
+    const text = document.getElementById('dText');
+    const opts = document.getElementById('dOpts');
+    name.textContent = n.name;
+    opts.innerHTML = '';
+    if (n.type === 'heal') {
+        text.textContent = '어서오세요! 포켓몬을 치료해 드릴까요?';
+        opts.innerHTML = '<button class="dialog-opt" onclick="healP()">✅ 네</button><button class="dialog-opt" onclick="closeDialog()">❌ 아니요</button>';
+    } else if (n.type === 'shop') {
+        text.textContent = '포켓몬 마트에 오신 걸 환영합니다!';
+        opts.innerHTML = '<button class="dialog-opt" onclick="closeDialog();openShop()">🛒 쇼핑</button><button class="dialog-opt" onclick="closeDialog()">👋 나가기</button>';
     }
-    ctx.strokeStyle = '#5a8a4a';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(0, 0, MAP.width, MAP.height);
-    
-    // 아이템
-    items.forEach(item => {
-        ctx.globalAlpha = item.life < 60 ? item.life / 60 : 1;
-        ctx.font = '22px Arial';
-        ctx.textAlign = 'center';
-        const emoji = item.type === 'heal' ? '❤️' : item.type === 'atkUp' ? '⚔️' : '⭐';
-        ctx.fillText(emoji, item.x, item.y + Math.sin(Date.now()/200)*5);
+    d.classList.add('show');
+}
+
+function healP() {
+    P.hp = P.maxHp; P.mp = P.maxMp;
+    document.getElementById('dText').textContent = '치료 완료! 💖';
+    document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="closeDialog()">감사합니다!</button>';
+}
+
+function closeDialog() {
+    document.getElementById('dialog').classList.remove('show');
+    state = 'play';
+    lt = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function openShop() {
+    document.getElementById('shopScreen').classList.add('show');
+    document.getElementById('shopGold').textContent = P.gold;
+    shopMode = 0;
+    renderShop();
+    state = 'shop';
+}
+
+function closeShop() {
+    document.getElementById('shopScreen').classList.remove('show');
+    state = 'play';
+    lt = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function shopTab(m, el) {
+    shopMode = m;
+    document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderShop();
+}
+
+function renderShop() {
+    const list = document.getElementById('shopList');
+    list.innerHTML = '';
+    const items = shopMode === 0 ? ['potion', 'superPotion', 'ether'] : ['sword1', 'sword2', 'armor1', 'armor2'];
+    items.forEach(id => {
+        const it = ITEMS[id];
+        const d = document.createElement('div');
+        d.className = 'shop-item';
+        d.innerHTML = `<div class="shop-item-icon">${it.icon}</div><div class="shop-item-info"><div class="shop-item-name">${it.name}</div><div class="shop-item-desc">${it.desc}</div></div><div><div class="shop-item-price">💰 ${it.price}</div><button class="buy-btn" onclick="buyItem('${id}')" ${P.gold < it.price ? 'disabled' : ''}>구매</button></div>`;
+        list.appendChild(d);
     });
-    ctx.globalAlpha = 1;
-    
-    // 파티클
-    particles.forEach(p => {
-        ctx.globalAlpha = p.life / 30;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    
-    // 투사체
-    projectiles.forEach(p => {
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    });
-    
-    // 적
-    enemies.forEach(e => drawChar(e, true));
-    
-    // 보스
-    if (boss) drawChar(boss, true);
-    
-    // 플레이어
-    if (player.invulnerable <= 0 || Math.floor(Date.now()/80) % 2 === 0) {
-        drawChar(player, false);
+}
+
+function buyItem(id) {
+    const it = ITEMS[id];
+    if (P.gold < it.price) return;
+    P.gold -= it.price;
+    addInv(id);
+    document.getElementById('shopGold').textContent = P.gold;
+    renderShop();
+}
+
+function addInv(id) {
+    const ex = inv.find(i => i.id === id);
+    if (ex) ex.n++; else inv.push({ id, n: 1 });
+}
+
+function openInv() {
+    closeMenu();
+    document.getElementById('invScreen').classList.add('show');
+    selInv = -1;
+    renderInv();
+    state = 'inv';
+}
+
+function closeInv() {
+    document.getElementById('invScreen').classList.remove('show');
+    state = 'play';
+    lt = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function renderInv() {
+    const g = document.getElementById('invGrid');
+    g.innerHTML = '';
+    for (let i = 0; i < 12; i++) {
+        const s = document.createElement('div');
+        s.className = 'inv-slot' + (i === selInv ? ' sel' : '');
+        if (inv[i]) { const it = ITEMS[inv[i].id]; s.innerHTML = `${it?.icon || '?'}<span class="cnt">${inv[i].n}</span>`; }
+        s.onclick = () => { selInv = i; renderInv(); };
+        g.appendChild(s);
     }
-    
-    ctx.restore();
+    const det = document.getElementById('invDetail');
+    if (selInv >= 0 && inv[selInv]) {
+        const it = ITEMS[inv[selInv].id];
+        det.classList.add('show');
+        document.getElementById('invName').textContent = it.name;
+        document.getElementById('invDesc').textContent = it.desc;
+        const btn = document.getElementById('invUse');
+        if (it.type === 'use') { btn.textContent = '사용'; btn.onclick = () => useItem(selInv); }
+        else if (it.type === 'weapon' || it.type === 'armor') { btn.textContent = '장착'; btn.onclick = () => equipItem(selInv); }
+        else { btn.textContent = '-'; btn.onclick = null; }
+    } else det.classList.remove('show');
 }
 
-function drawChar(char, isEnemy) {
-    const spriteType = char.direction === 'up' ? 'back' : 'front';
-    const img = imageCache[getSprite(char.pokemonId, spriteType)];
-    
-    // 그림자
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath();
-    ctx.ellipse(char.x, char.y + char.height/2 - 5, char.width/3, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    if (img) {
-        ctx.save();
-        if (char.hitFlash > 0) ctx.filter = 'brightness(2)';
-        
-        // 수정된 좌우 방향 처리 - 오른쪽일 때 반전
-        if (char.direction === 'right') {
-            ctx.translate(char.x, char.y);
-            ctx.scale(-1, 1);
-            ctx.drawImage(img, -char.width/2, -char.height/2, char.width, char.height);
-        } else {
-            ctx.drawImage(img, char.x - char.width/2, char.y - char.height/2, char.width, char.height);
-        }
-        ctx.restore();
-    } else {
-        ctx.fillStyle = isEnemy ? '#e74c3c' : (char.color || '#4CAF50');
-        ctx.beginPath();
-        ctx.arc(char.x, char.y, char.width/2, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    // HP바 (적만)
-    if (isEnemy && char !== boss) {
-        const pct = char.hp / char.maxHp;
-        ctx.fillStyle = '#333';
-        ctx.fillRect(char.x - 25, char.y - char.height/2 - 12, 50, 6);
-        ctx.fillStyle = pct > 0.3 ? '#4CAF50' : '#ff6b6b';
-        ctx.fillRect(char.x - 25, char.y - char.height/2 - 12, 50 * pct, 6);
-    }
+function useItem(i) {
+    const iv = inv[i]; if (!iv) return;
+    const it = ITEMS[iv.id];
+    if (it.eff?.hp) P.hp = Math.min(P.maxHp, P.hp + it.eff.hp);
+    if (it.eff?.mp) P.mp = Math.min(P.maxMp, P.mp + it.eff.mp);
+    iv.n--; if (iv.n <= 0) inv.splice(i, 1);
+    selInv = -1; renderInv(); updateHUD();
 }
 
-function gameOver() {
-    gameState = 'gameover';
-    document.getElementById('finalLevel').textContent = player.level;
-    document.getElementById('finalWave').textContent = wave;
-    document.getElementById('finalKills').textContent = kills;
-    document.getElementById('gameOverScreen').classList.add('active');
+function equipItem(i) {
+    const iv = inv[i]; if (!iv) return;
+    const it = ITEMS[iv.id];
+    const slot = it.type === 'weapon' ? 'weapon' : 'armor';
+    if (equip[slot]) addInv(equip[slot].id);
+    equip[slot] = { ...it, id: iv.id };
+    iv.n--; if (iv.n <= 0) inv.splice(i, 1);
+    recalc(); selInv = -1; renderInv(); updateHUD();
 }
 
-function pauseGame() {
-    if (gameState !== 'playing') return;
-    gameState = 'paused';
-    document.getElementById('pauseLevel').textContent = player.level;
-    document.getElementById('pauseWave').textContent = wave;
-    document.getElementById('pauseKills').textContent = kills;
-    document.getElementById('pauseScreen').classList.add('active');
+function dropItem() {
+    if (selInv < 0 || !inv[selInv]) return;
+    inv[selInv].n--; if (inv[selInv].n <= 0) inv.splice(selInv, 1);
+    selInv = -1; renderInv();
 }
 
-function resumeGame() {
-    gameState = 'playing';
-    document.getElementById('pauseScreen').classList.remove('active');
-    lastTime = performance.now();
-    requestAnimationFrame(gameLoop);
+function openEquip() {
+    closeMenu();
+    document.getElementById('equipScreen').classList.add('show');
+    renderEquip();
+    state = 'equip';
 }
 
-function changeChar() {
-    gameState = 'menu';
-    selectedPokemon = null;
-    showUI(false);
-    document.querySelectorAll('.pokemon-card').forEach(c => c.classList.remove('selected'));
+function closeEquip() {
+    document.getElementById('equipScreen').classList.remove('show');
+    state = 'play';
+    lt = performance.now();
+    requestAnimationFrame(loop);
+}
+
+function renderEquip() {
+    const s = document.getElementById('equipSlots');
+    s.innerHTML = `<div class="equip-slot"><div class="equip-slot-label">무기</div><div class="equip-slot-icon">${equip.weapon?.icon || '➖'}</div><div class="equip-slot-name">${equip.weapon?.name || '없음'}</div></div>
+    <div class="equip-slot"><div class="equip-slot-label">방어구</div><div class="equip-slot-icon">${equip.armor?.icon || '➖'}</div><div class="equip-slot-name">${equip.armor?.name || '없음'}</div></div>`;
+    const st = document.getElementById('equipStats');
+    st.innerHTML = `<div class="equip-stat"><span>공격력</span><span>${P.baseAtk} + ${equip.weapon?.stat?.atk || 0}</span></div>
+    <div class="equip-stat"><span>방어력</span><span>${P.baseDef} + ${equip.armor?.stat?.def || 0}</span></div>`;
+}
+
+function openMenu() { document.getElementById('menuScreen').classList.add('show'); state = 'menu'; }
+function closeMenu() { document.getElementById('menuScreen').classList.remove('show'); state = 'play'; lt = performance.now(); requestAnimationFrame(loop); }
+function toTitle() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+    document.getElementById('startScreen').classList.add('show');
+    showUI(0);
+    state = 'title';
+    selPoke = null;
+    document.querySelectorAll('.poke-card').forEach(c => c.classList.remove('sel'));
     document.getElementById('startBtn').disabled = true;
     document.getElementById('startBtn').textContent = '포켓몬을 선택하세요';
 }
 
-function exitGame() {
-    changeChar();
+function gameOver() {
+    state = 'gameover';
+    document.getElementById('goLv').textContent = P.lv;
+    document.getElementById('goKills').textContent = kills;
+    document.getElementById('goScreen').classList.add('show');
 }
 
-let lastTime = 0;
-function gameLoop(timestamp) {
-    if (gameState !== 'playing') return;
-    
-    const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
-    lastTime = timestamp;
-    
-    updatePlayer(dt);
-    updateEnemies(dt);
-    updateBoss(dt);
-    updateProjectiles(dt);
-    updateParticles(dt);
-    updateItems(dt);
-    updateCamera();
-    updateHUD();
-    render();
-    
-    requestAnimationFrame(gameLoop);
+function respawn() {
+    document.getElementById('goScreen').classList.remove('show');
+    P.hp = Math.floor(P.maxHp / 2); P.mp = Math.floor(P.maxMp / 2);
+    P.gold = Math.floor(P.gold / 2);
+    P.x = 400; P.y = 400;
+    loadMap('town');
+    state = 'play';
+    lt = performance.now();
+    requestAnimationFrame(loop);
 }
 
-// 수정된 조이스틱 컨트롤
-function setupJoystick() {
-    const container = document.getElementById('joystickContainer');
-    const base = document.getElementById('joystickBase');
-    const stick = document.getElementById('joystickStick');
-    const maxDist = 40;
+function updateCam(M) {
+    const tx = P.x - C.width / 2, ty = P.y - C.height / 2;
+    cam.x += (tx - cam.x) * 0.1;
+    cam.y += (ty - cam.y) * 0.1;
+    cam.x = clamp(cam.x, 0, Math.max(0, M.w - C.width));
+    cam.y = clamp(cam.y, 0, Math.max(0, M.h - C.height));
+}
+
+function updateHUD() {
+    document.getElementById('hudIcon').src = spr(P.pid);
+    document.getElementById('hudName').textContent = P.name;
+    document.getElementById('hudLv').textContent = P.lv;
+    document.getElementById('hudHp').style.width = (P.hp / P.maxHp * 100) + '%';
+    document.getElementById('hudMp').style.width = (P.mp / P.maxMp * 100) + '%';
+    document.getElementById('hudExp').style.width = (P.exp / P.expNext * 100) + '%';
+    document.getElementById('hudAtk').textContent = P.atk;
+    document.getElementById('hudDef').textContent = P.def;
+    document.getElementById('hudGold').textContent = P.gold;
+}
+
+function updateCD() {
+    const show = (id, v) => { const e = document.getElementById(id); if (v > 0) { e.classList.add('show'); e.textContent = Math.ceil(v / 60); } else e.classList.remove('show'); };
+    show('cdB', cd.b);
+    show('cdX', cd.x);
+    show('cdY', cd.y);
+}
+
+function render() {
+    const M = MAPS[map];
+    X.clearRect(0, 0, C.width, C.height);
+    X.save();
+    X.translate(-cam.x, -cam.y);
     
-    function handleStart(e) {
-        e.preventDefault();
-        const touch = e.touches ? e.touches[0] : e;
-        const rect = base.getBoundingClientRect();
-        joystick.active = true;
-        joystick.baseX = rect.left + rect.width / 2;
-        joystick.baseY = rect.top + rect.height / 2;
-        if (e.touches) joystick.touchId = e.touches[0].identifier;
-        handleMove(e);
-    }
+    // 배경
+    const ts = 32, sx = Math.floor(cam.x / ts) * ts, sy = Math.floor(cam.y / ts) * ts;
+    for (let x = sx; x < sx + C.width + ts * 2 && x < M.w; x += ts)
+        for (let y = sy; y < sy + C.height + ts * 2 && y < M.h; y += ts) {
+            X.fillStyle = M.colors[(Math.floor(x/ts) + Math.floor(y/ts)) % 2];
+            X.fillRect(x, y, ts, ts);
+        }
     
-    function handleMove(e) {
-        if (!joystick.active) return;
-        e.preventDefault();
-        
-        let touch;
-        if (e.touches) {
-            for (let t of e.touches) {
-                if (t.identifier === joystick.touchId) { touch = t; break; }
-            }
-            if (!touch) return;
+    // 포탈
+    portals.forEach(p => {
+        X.fillStyle = 'rgba(147, 112, 219, 0.5)';
+        X.fillRect(p.x, p.y, p.w, p.h);
+        X.fillStyle = '#fff'; X.font = '9px sans-serif'; X.textAlign = 'center';
+        X.fillText(p.label, p.x + p.w/2, p.y - 5);
+    });
+    
+    // 건물
+    obs.filter(o => o.type === 'bld').forEach(b => {
+        X.fillStyle = b.color; X.fillRect(b.x, b.y, b.w, b.h);
+        X.fillStyle = '#fff'; X.font = '20px sans-serif'; X.textAlign = 'center';
+        X.fillText(b.icon, b.x + b.w/2, b.y + b.h/2 + 7);
+    });
+    
+    // 나무/바위
+    obs.filter(o => o.type === 'tree' || o.type === 'rock').forEach(o => {
+        X.font = '28px sans-serif'; X.textAlign = 'center';
+        X.fillText(o.type === 'tree' ? '🌲' : '🪨', o.x + o.w/2, o.y + o.h/2 + 10);
+    });
+    
+    // 드롭
+    drops.forEach(d => {
+        const it = ITEMS[d.id];
+        X.font = '18px sans-serif'; X.textAlign = 'center';
+        X.fillText(it?.icon || '?', d.x, d.y + Math.sin(Date.now()/200) * 3);
+    });
+    
+    // NPC
+    npcs.forEach(n => { X.font = '28px sans-serif'; X.textAlign = 'center'; X.fillText(n.icon, n.x, n.y + 10); });
+    
+    // 파티클
+    parts.forEach(p => {
+        X.globalAlpha = p.life / 25;
+        X.fillStyle = p.color;
+        X.beginPath(); X.arc(p.x, p.y, p.sz, 0, Math.PI * 2); X.fill();
+    });
+    X.globalAlpha = 1;
+    
+    // 투사체
+    projs.forEach(p => {
+        X.fillStyle = p.color; X.shadowColor = p.color; X.shadowBlur = 10;
+        X.beginPath(); X.arc(p.x, p.y, p.sz, 0, Math.PI * 2); X.fill();
+        X.shadowBlur = 0;
+    });
+    
+    // 적
+    enemies.forEach(e => drawChar(e, 1));
+    
+    // 플레이어
+    if (P.inv <= 0 || Math.floor(Date.now()/80) % 2 === 0) drawChar(P, 0);
+    
+    X.restore();
+}
+
+function drawChar(c, isEnemy) {
+    const back = c.dir === 'up';
+    const img = imgs[spr(c.pid, back)];
+    
+    X.fillStyle = 'rgba(0,0,0,0.2)';
+    X.beginPath(); X.ellipse(c.x, c.y + c.h/2, c.w/3, 8, 0, 0, Math.PI * 2); X.fill();
+    
+    if (img) {
+        X.save();
+        if (c.hit > 0) X.filter = 'brightness(2)';
+        if (c.dir === 'right') {
+            X.translate(c.x, c.y);
+            X.scale(-1, 1);
+            X.drawImage(img, -c.w/2, -c.h/2, c.w, c.h);
         } else {
-            touch = e;
+            X.drawImage(img, c.x - c.w/2, c.y - c.h/2, c.w, c.h);
         }
-        
-        const dx = touch.clientX - joystick.baseX;
-        const dy = touch.clientY - joystick.baseY;
-        const dist = Math.hypot(dx, dy);
-        const clampedDist = Math.min(dist, maxDist);
-        const angle = Math.atan2(dy, dx);
-        
-        const stickX = Math.cos(angle) * clampedDist;
-        const stickY = Math.sin(angle) * clampedDist;
-        
-        stick.style.left = `calc(50% + ${stickX}px)`;
-        stick.style.top = `calc(50% + ${stickY}px)`;
-        
-        input.moveX = clampedDist > 5 ? stickX / maxDist : 0;
-        input.moveY = clampedDist > 5 ? stickY / maxDist : 0;
+        X.restore();
     }
     
-    function handleEnd(e) {
-        if (e.touches && e.touches.length > 0) {
-            let found = false;
-            for (let t of e.touches) {
-                if (t.identifier === joystick.touchId) { found = true; break; }
-            }
-            if (found) return;
-        }
-        
-        joystick.active = false;
-        joystick.touchId = null;
-        stick.style.left = '50%';
-        stick.style.top = '50%';
-        input.moveX = 0;
-        input.moveY = 0;
+    if (isEnemy) {
+        const pct = c.hp / c.maxHp;
+        X.fillStyle = '#333'; X.fillRect(c.x - 18, c.y - c.h/2 - 8, 36, 4);
+        X.fillStyle = pct > 0.3 ? '#2ecc71' : '#e74c3c';
+        X.fillRect(c.x - 18, c.y - c.h/2 - 8, 36 * pct, 4);
     }
-    
-    container.addEventListener('touchstart', handleStart, { passive: false });
-    container.addEventListener('touchmove', handleMove, { passive: false });
-    container.addEventListener('touchend', handleEnd);
-    container.addEventListener('touchcancel', handleEnd);
-    
-    container.addEventListener('mousedown', handleStart);
-    document.addEventListener('mousemove', (e) => { if (joystick.active) handleMove(e); });
-    document.addEventListener('mouseup', handleEnd);
 }
 
-function setupButtons() {
-    const btnAttack = document.getElementById('btnAttack');
-    const btnSkill1 = document.getElementById('btnSkill1');
-    const btnSkill2 = document.getElementById('btnSkill2');
-    const btnDash = document.getElementById('btnDash');
-    
-    function addBtnEvents(btn, key) {
-        btn.addEventListener('touchstart', e => { e.preventDefault(); input[key] = true; }, { passive: false });
-        btn.addEventListener('touchend', e => { e.preventDefault(); input[key] = false; });
-        btn.addEventListener('mousedown', () => input[key] = true);
-        btn.addEventListener('mouseup', () => input[key] = false);
-        btn.addEventListener('mouseleave', () => input[key] = false);
-    }
-    
-    addBtnEvents(btnAttack, 'attack');
-    addBtnEvents(btnSkill1, 'skill1');
-    addBtnEvents(btnSkill2, 'skill2');
-    addBtnEvents(btnDash, 'dash');
-    
-    // 수정된 키보드 이벤트 - keyState 사용
-    document.addEventListener('keydown', e => {
-        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keyState.up = true;
-        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keyState.down = true;
-        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keyState.left = true;
-        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keyState.right = true;
-        if (e.key === ' ' || e.key === 'z' || e.key === 'Z') input.attack = true;
-        if (e.key === 'x' || e.key === 'X') input.skill1 = true;
-        if (e.key === 'c' || e.key === 'C') input.skill2 = true;
-        if (e.key === 'Shift') input.dash = true;
-        if (e.key === 'Escape') { if (gameState === 'playing') pauseGame(); else if (gameState === 'paused') resumeGame(); }
-    });
-    
-    document.addEventListener('keyup', e => {
-        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keyState.up = false;
-        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keyState.down = false;
-        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keyState.left = false;
-        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keyState.right = false;
-        if (e.key === ' ' || e.key === 'z' || e.key === 'Z') input.attack = false;
-        if (e.key === 'x' || e.key === 'X') input.skill1 = false;
-        if (e.key === 'c' || e.key === 'C') input.skill2 = false;
-        if (e.key === 'Shift') input.dash = false;
-    });
+// 입력
+const joyArea = document.getElementById('joyArea');
+const joyStick = document.getElementById('joyStick');
+const maxD = 30;
+
+function joyStart(e) {
+    e.preventDefault();
+    const t = e.touches ? e.touches[0] : e;
+    const r = joyArea.getBoundingClientRect();
+    joy.on = 1;
+    joy.cx = r.left + r.width / 2;
+    joy.cy = r.top + r.height / 2;
+    if (e.touches) joy.id = t.identifier;
+    joyMove(e);
 }
 
-function setupUIButtons() {
-    document.getElementById('startBtn').onclick = startGame;
-    document.getElementById('menuBtn').onclick = pauseGame;
-    document.getElementById('resumeBtn').onclick = resumeGame;
-    document.getElementById('changeCharBtn').onclick = changeChar;
-    document.getElementById('exitBtn').onclick = exitGame;
-    document.getElementById('restartBtn').onclick = startGame;
-    document.getElementById('changeCharBtn2').onclick = changeChar;
-    document.getElementById('exitBtn2').onclick = exitGame;
+function joyMove(e) {
+    if (!joy.on) return;
+    e.preventDefault();
+    let t;
+    if (e.touches) { for (let x of e.touches) if (x.identifier === joy.id) { t = x; break; } if (!t) return; }
+    else t = e;
+    const dx = t.clientX - joy.cx, dy = t.clientY - joy.cy;
+    const d = Math.hypot(dx, dy), cd = Math.min(d, maxD), a = Math.atan2(dy, dx);
+    const sx = Math.cos(a) * cd, sy = Math.sin(a) * cd;
+    joyStick.style.left = `calc(50% + ${sx}px)`;
+    joyStick.style.top = `calc(50% + ${sy}px)`;
+    input.mx = cd > 5 ? sx / maxD : 0;
+    input.my = cd > 5 ? sy / maxD : 0;
+}
+
+function joyEnd(e) {
+    if (e.touches && e.touches.length > 0) { for (let t of e.touches) if (t.identifier === joy.id) return; }
+    joy.on = 0;
+    joyStick.style.left = '50%';
+    joyStick.style.top = '50%';
+    input.mx = 0;
+    input.my = 0;
+}
+
+joyArea.addEventListener('touchstart', joyStart, { passive: false });
+joyArea.addEventListener('touchmove', joyMove, { passive: false });
+joyArea.addEventListener('touchend', joyEnd);
+joyArea.addEventListener('touchcancel', joyEnd);
+joyArea.addEventListener('mousedown', joyStart);
+document.addEventListener('mousemove', e => { if (joy.on) joyMove(e); });
+document.addEventListener('mouseup', joyEnd);
+
+function btn(id, k) {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', e => { e.preventDefault(); input[k] = 1; }, { passive: false });
+    el.addEventListener('touchend', e => { e.preventDefault(); input[k] = 0; });
+    el.addEventListener('mousedown', () => input[k] = 1);
+    el.addEventListener('mouseup', () => input[k] = 0);
+}
+btn('btnA', 'a'); btn('btnB', 'b'); btn('btnX', 'x'); btn('btnY', 'y');
+
+document.getElementById('interact').onclick = interact;
+document.getElementById('menuBtn').onclick = openMenu;
+document.getElementById('startBtn').onclick = startGame;
+
+const keys = {};
+document.addEventListener('keydown', e => {
+    keys[e.key.toLowerCase()] = 1;
+    updateKeys();
+    if (e.key === ' ' || e.key === 'z') input.a = 1;
+    if (e.key === 'x') input.b = 1;
+    if (e.key === 'c') input.x = 1;
+    if (e.key === 'Shift') input.y = 1;
+    if (e.key === 'Escape') { if (state === 'play') openMenu(); else if (state === 'menu') closeMenu(); }
+    if (e.key === 'e' || e.key === 'Enter') interact();
+});
+document.addEventListener('keyup', e => {
+    keys[e.key.toLowerCase()] = 0;
+    updateKeys();
+    if (e.key === ' ' || e.key === 'z') input.a = 0;
+    if (e.key === 'x') input.b = 0;
+    if (e.key === 'c') input.x = 0;
+    if (e.key === 'Shift') input.y = 0;
+});
+
+function updateKeys() {
+    if (!joy.on) {
+        input.mx = (keys['d'] || keys['arrowright'] ? 1 : 0) - (keys['a'] || keys['arrowleft'] ? 1 : 0);
+        input.my = (keys['s'] || keys['arrowdown'] ? 1 : 0) - (keys['w'] || keys['arrowup'] ? 1 : 0);
+    }
 }
 
 async function init() {
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    
-    await preloadImages();
-    
-    initPokemonSelection();
-    setupJoystick();
-    setupButtons();
-    setupUIButtons();
-    
+    await preload();
+    initSelect();
     console.log('Game Ready!');
 }
 
