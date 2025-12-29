@@ -771,7 +771,8 @@ function startGame(pokemonId) {
         invulnerable: 0,
         isDashing: false,
         shield: 0,
-        image: null
+        image: null,
+        rotation: 0  // 회전 각도 추가
     };
     
     // 플레이어 이미지 로드
@@ -846,8 +847,15 @@ function setupControls() {
         e.preventDefault();
         e.stopPropagation();
         if (joystickTouchId === null && e.touches.length > 0) {
-            joystickTouchId = e.touches[0].identifier;
-            joystickActive = true;
+            const touch = e.touches[0];
+            const rect = joystick.getBoundingClientRect();
+            
+            // 조이스틱 영역 내부 터치인지 확인
+            if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                joystickTouchId = touch.identifier;
+                joystickActive = true;
+            }
         }
     }, { passive: false });
     
@@ -1073,6 +1081,11 @@ function update(dt) {
         player.y += joystickVector.y * player.speed * dt;
         player.x = Math.max(player.size, Math.min(MAP_WIDTH - player.size, player.x));
         player.y = Math.max(player.size, Math.min(MAP_HEIGHT - player.size, player.y));
+        
+        // 이동 방향에 따라 회전 각도 계산
+        if (Math.abs(joystickVector.x) > 0.1 || Math.abs(joystickVector.y) > 0.1) {
+            player.rotation = Math.atan2(joystickVector.y, joystickVector.x);
+        }
     }
     
     updateCamera();
@@ -1282,15 +1295,24 @@ function render() {
     });
     
     enemies.forEach(enemy => {
+        // 플레이어를 향한 각도 계산
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+        const angle = Math.atan2(dy, dx);
+        
         // 그림자
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.beginPath();
         ctx.ellipse(enemy.x, enemy.y + enemy.size + 3, enemy.size * 0.8, enemy.size * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 포켓몬 이미지
+        // 포켓몬 이미지 (회전 적용)
         if (enemy.image && enemy.image.complete) {
-            ctx.drawImage(enemy.image, enemy.x - enemy.size, enemy.y - enemy.size, enemy.size * 2, enemy.size * 2);
+            ctx.save();
+            ctx.translate(enemy.x, enemy.y);
+            ctx.rotate(angle);
+            ctx.drawImage(enemy.image, -enemy.size, -enemy.size, enemy.size * 2, enemy.size * 2);
+            ctx.restore();
         } else {
             // 이미지 로딩 중일 때 원으로 표시
             ctx.fillStyle = enemy.color;
@@ -1315,16 +1337,24 @@ function render() {
         ctx.ellipse(player.x, player.y + player.size + 5, player.size * 0.7, player.size * 0.25, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 플레이어 포켓몬 이미지
+        // 플레이어 포켓몬 이미지 (회전 적용)
         if (player.image && player.image.complete) {
-            ctx.drawImage(player.image, player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.rotation);
+            ctx.drawImage(player.image, -player.size, -player.size, player.size * 2, player.size * 2);
+            ctx.restore();
         } else {
             // 이미지 로딩 중일 때 텍스트로 표시
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.rotation);
             ctx.font = `${player.size * 2}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = getTypeColor(player.type);
-            ctx.fillText(player.name[0], player.x, player.y);
+            ctx.fillText(player.name[0], 0, 0);
+            ctx.restore();
         }
         
         // 보호막
