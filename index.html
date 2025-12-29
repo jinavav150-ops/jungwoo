@@ -217,8 +217,9 @@ const ITEMS = {
 };
 const MAPS = {
     town: { name: '태초마을', w: 800, h: 600, colors: ['#90d080', '#80c070'], enemies: false, npcs: [
-        { id: 'nurse', x: 400, y: 180, icon: '👩‍⚕️', name: '간호사 조이', type: 'heal' },
-        { id: 'shop', x: 200, y: 280, icon: '🧑‍💼', name: '상점 주인', type: 'shop' }
+        { id: 'nurse', x: 400, y: 180, icon: '👩‍⚕️', name: '간호사 다솔', type: 'heal' },
+        { id: 'shop', x: 200, y: 280, icon: '🧑‍💼', name: '상점주인 호철', type: 'shop' },
+        { id: 'boyoung', x: 600, y: 350, icon: '👩', name: '보영엄마', type: 'boyoung' }
     ], buildings: [{ x: 350, y: 80, w: 100, h: 80, color: '#e74c3c', icon: '🏥' }, { x: 150, y: 200, w: 100, h: 80, color: '#3498db', icon: '🏪' }],
     portals: [{ x: 750, y: 250, w: 50, h: 100, to: 'route1', tx: 50, ty: 300, label: '1번도로 →' }] },
     route1: { name: '1번도로', w: 1200, h: 800, colors: ['#88c070', '#78b060'], enemies: true, types: ['rattata', 'pidgey'], max: 8, rate: 3000, npcs: [], buildings: [], trees: 15,
@@ -527,6 +528,9 @@ function startDialog(n) {
     } else if (n.type === 'shop') {
         text.textContent = '포켓몬 마트에 오신 걸 환영합니다!';
         opts.innerHTML = '<button class="dialog-opt" onclick="closeDialog();openShop()">🛒 쇼핑</button><button class="dialog-opt" onclick="closeDialog()">👋 나가기</button>';
+    } else if (n.type === 'boyoung') {
+        text.textContent = '정우 엉덩이 대!!';
+        opts.innerHTML = '<button class="dialog-opt" onclick="boyoungStep2()">1대</button><button class="dialog-opt" onclick="boyoungStep2()">2대</button><button class="dialog-opt" onclick="boyoungStep2()">15대</button>';
     }
     d.classList.add('show');
 }
@@ -535,6 +539,18 @@ function healP() {
     P.hp = P.maxHp; P.mp = P.maxMp;
     document.getElementById('dText').textContent = '치료 완료! 💖';
     document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="closeDialog()">감사합니다!</button>';
+}
+
+function boyoungStep2() {
+    document.getElementById('dText').textContent = '뭘로 맞을래?';
+    document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="boyoungHit()">주걱</button><button class="dialog-opt" onclick="boyoungHit()">야구방망이</button><button class="dialog-opt" onclick="boyoungHit()">회초리</button>';
+}
+
+function boyoungHit() {
+    P.hp = Math.floor(P.hp / 2);
+    document.getElementById('dText').textContent = '아야!! 💥';
+    document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="closeDialog()">😭 흑흑...</button>';
+    updateHUD();
 }
 
 function closeDialog() {
