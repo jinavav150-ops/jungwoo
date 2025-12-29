@@ -1305,22 +1305,23 @@ function render() {
         const dx = player.x - enemy.x;
         const dy = player.y - enemy.y;
         
-        let enemyDirection = 'down';
-        if (Math.abs(dx) > Math.abs(dy)) {
-            enemyDirection = dx > 0 ? 'right' : 'left';
-        } else {
-            enemyDirection = dy > 0 ? 'down' : 'up';
-        }
-        
         // 그림자
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.beginPath();
         ctx.ellipse(enemy.x, enemy.y + enemy.size + 3, enemy.size * 0.8, enemy.size * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 포켓몬 이미지
+        // 포켓몬 이미지 (플레이어 방향으로 회전)
         if (enemy.image && enemy.image.complete) {
-            ctx.drawImage(enemy.image, enemy.x - enemy.size, enemy.y - enemy.size, enemy.size * 2, enemy.size * 2);
+            ctx.save();
+            ctx.translate(enemy.x, enemy.y);
+            
+            // 플레이어를 향한 각도 계산
+            const angle = Math.atan2(dy, dx);
+            ctx.rotate(angle);
+            
+            ctx.drawImage(enemy.image, -enemy.size, -enemy.size, enemy.size * 2, enemy.size * 2);
+            ctx.restore();
         } else {
             // 이미지 로딩 중일 때 원으로 표시
             ctx.fillStyle = enemy.color;
@@ -1328,20 +1329,6 @@ function render() {
             ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
             ctx.fill();
         }
-        
-        // 작은 방향 화살표
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#FF6B6B';
-        
-        let arrow = '';
-        if (enemyDirection === 'up') arrow = '↑';
-        else if (enemyDirection === 'down') arrow = '↓';
-        else if (enemyDirection === 'left') arrow = '←';
-        else if (enemyDirection === 'right') arrow = '→';
-        
-        ctx.fillText(arrow, enemy.x, enemy.y);
         
         // HP 바
         const barWidth = enemy.size * 2.5;
@@ -1359,9 +1346,26 @@ function render() {
         ctx.ellipse(player.x, player.y + player.size + 5, player.size * 0.7, player.size * 0.25, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 플레이어 포켓몬 이미지
+        // 플레이어 포켓몬 이미지 (방향에 따라 회전)
         if (player.image && player.image.complete) {
-            ctx.drawImage(player.image, player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // 방향에 따른 회전 각도
+            let rotation = 0;
+            if (player.direction === 'up') {
+                rotation = -Math.PI / 2;  // -90도 (위)
+            } else if (player.direction === 'down') {
+                rotation = Math.PI / 2;   // 90도 (아래)
+            } else if (player.direction === 'left') {
+                rotation = Math.PI;       // 180도 (왼쪽)
+            } else if (player.direction === 'right') {
+                rotation = 0;             // 0도 (오른쪽, 기본)
+            }
+            
+            ctx.rotate(rotation);
+            ctx.drawImage(player.image, -player.size, -player.size, player.size * 2, player.size * 2);
+            ctx.restore();
         } else {
             // 이미지 로딩 중일 때 텍스트로 표시
             ctx.font = `${player.size * 2}px Arial`;
@@ -1370,37 +1374,6 @@ function render() {
             ctx.fillStyle = getTypeColor(player.type);
             ctx.fillText(player.name[0], player.x, player.y);
         }
-        
-        // 방향 화살표 표시
-        ctx.save();
-        ctx.translate(player.x, player.y);
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#FFD700';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
-        
-        let arrow = '';
-        let offsetX = 0, offsetY = 0;
-        
-        if (player.direction === 'up') {
-            arrow = '↑';
-            offsetY = -player.size - 8;
-        } else if (player.direction === 'down') {
-            arrow = '↓';
-            offsetY = player.size + 8;
-        } else if (player.direction === 'left') {
-            arrow = '←';
-            offsetX = -player.size - 8;
-        } else if (player.direction === 'right') {
-            arrow = '→';
-            offsetX = player.size + 8;
-        }
-        
-        ctx.strokeText(arrow, offsetX, offsetY);
-        ctx.fillText(arrow, offsetX, offsetY);
-        ctx.restore();
         
         // 보호막
         if (player.shield > 0) {
