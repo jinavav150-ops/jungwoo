@@ -1318,19 +1318,9 @@ function render() {
         ctx.ellipse(enemy.x, enemy.y + enemy.size + 3, enemy.size * 0.8, enemy.size * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 포켓몬 이미지 (4방향)
+        // 포켓몬 이미지
         if (enemy.image && enemy.image.complete) {
-            ctx.save();
-            ctx.translate(enemy.x, enemy.y);
-            
-            if (enemyDirection === 'left') {
-                ctx.scale(-1, 1);
-            } else if (enemyDirection === 'up') {
-                ctx.rotate(Math.PI);
-            }
-            
-            ctx.drawImage(enemy.image, -enemy.size, -enemy.size, enemy.size * 2, enemy.size * 2);
-            ctx.restore();
+            ctx.drawImage(enemy.image, enemy.x - enemy.size, enemy.y - enemy.size, enemy.size * 2, enemy.size * 2);
         } else {
             // 이미지 로딩 중일 때 원으로 표시
             ctx.fillStyle = enemy.color;
@@ -1338,6 +1328,20 @@ function render() {
             ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
             ctx.fill();
         }
+        
+        // 작은 방향 화살표
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#FF6B6B';
+        
+        let arrow = '';
+        if (enemyDirection === 'up') arrow = '↑';
+        else if (enemyDirection === 'down') arrow = '↓';
+        else if (enemyDirection === 'left') arrow = '←';
+        else if (enemyDirection === 'right') arrow = '→';
+        
+        ctx.fillText(arrow, enemy.x, enemy.y);
         
         // HP 바
         const barWidth = enemy.size * 2.5;
@@ -1355,26 +1359,9 @@ function render() {
         ctx.ellipse(player.x, player.y + player.size + 5, player.size * 0.7, player.size * 0.25, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 플레이어 포켓몬 이미지 (4방향)
+        // 플레이어 포켓몬 이미지
         if (player.image && player.image.complete) {
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            
-            // 방향에 따라 이미지 변환
-            if (player.direction === 'left') {
-                // 왼쪽: 좌우 반전
-                ctx.scale(-1, 1);
-            } else if (player.direction === 'up') {
-                // 위쪽: 180도 회전 (뒷모습)
-                ctx.rotate(Math.PI);
-            } else if (player.direction === 'down') {
-                // 아래쪽: 그대로 (앞모습)
-            } else if (player.direction === 'right') {
-                // 오른쪽: 그대로
-            }
-            
-            ctx.drawImage(player.image, -player.size, -player.size, player.size * 2, player.size * 2);
-            ctx.restore();
+            ctx.drawImage(player.image, player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
         } else {
             // 이미지 로딩 중일 때 텍스트로 표시
             ctx.font = `${player.size * 2}px Arial`;
@@ -1383,6 +1370,37 @@ function render() {
             ctx.fillStyle = getTypeColor(player.type);
             ctx.fillText(player.name[0], player.x, player.y);
         }
+        
+        // 방향 화살표 표시
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#FFD700';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        
+        let arrow = '';
+        let offsetX = 0, offsetY = 0;
+        
+        if (player.direction === 'up') {
+            arrow = '↑';
+            offsetY = -player.size - 8;
+        } else if (player.direction === 'down') {
+            arrow = '↓';
+            offsetY = player.size + 8;
+        } else if (player.direction === 'left') {
+            arrow = '←';
+            offsetX = -player.size - 8;
+        } else if (player.direction === 'right') {
+            arrow = '→';
+            offsetX = player.size + 8;
+        }
+        
+        ctx.strokeText(arrow, offsetX, offsetY);
+        ctx.fillText(arrow, offsetX, offsetY);
+        ctx.restore();
         
         // 보호막
         if (player.shield > 0) {
