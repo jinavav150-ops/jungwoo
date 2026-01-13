@@ -3,242 +3,748 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>정우의 포켓몬 RPG</title>
+    <title>정우의 포켓몬 RPG - 고퀄리티 버전</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Malgun Gothic', sans-serif; background: #000; overflow: hidden; position: fixed; width: 100%; height: 100%; }
+        body { font-family: 'Pretendard', 'Segoe UI', 'Malgun Gothic', sans-serif; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); overflow: hidden; position: fixed; width: 100%; height: 100%; }
         canvas { display: block; touch-action: none; }
-        .hud { position: absolute; top: 8px; left: 8px; z-index: 10; display: none; }
+        
+        /* 고퀄리티 HUD */
+        .hud { position: absolute; top: 20px; left: 20px; z-index: 10; display: none; }
         .hud.show { display: block; }
-        .hud-box { background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 10px; border: 2px solid #ffd700; color: #fff; font-size: 11px; }
-        .hud-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
-        .hud-icon { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ffd700; }
-        .hud-name { color: #ffd700; font-weight: bold; }
-        .hud-lv { background: #c0392b; padding: 1px 6px; border-radius: 8px; font-size: 9px; margin-left: 4px; }
-        .bar { width: 70px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; }
-        .bar-hp { background: linear-gradient(90deg, #27ae60, #2ecc71); }
-        .bar-mp { background: linear-gradient(90deg, #2980b9, #3498db); }
-        .bar-exp { background: linear-gradient(90deg, #8e44ad, #9b59b6); }
-        .hud-stats { display: flex; gap: 8px; margin-top: 4px; font-size: 10px; color: #aaa; }
-        .location { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 15px; border: 2px solid #ffd700; color: #ffd700; font-size: 12px; display: none; z-index: 10; }
+        .hud-box { 
+            background: linear-gradient(145deg, rgba(30, 30, 46, 0.95), rgba(20, 20, 35, 0.95));
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            border-radius: 20px;
+            border: 3px solid rgba(255, 215, 0, 0.7);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5),
+                       inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 14px;
+            min-width: 280px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hud-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent);
+        }
+        .hud-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+        .hud-icon { width: 60px; height: 60px; border-radius: 12px; border: 3px solid #ffd700; object-fit: cover; background: rgba(0,0,0,0.3); }
+        .hud-name { color: #ffd700; font-weight: 800; font-size: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .hud-lv { background: linear-gradient(135deg, #c0392b, #e74c3c); padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px; font-weight: bold; }
+        .bar-container { margin: 6px 0; }
+        .bar-label { display: flex; justify-content: space-between; color: #ddd; font-size: 11px; margin-bottom: 3px; }
+        .bar { width: 180px; height: 14px; background: rgba(0, 0, 0, 0.4); border-radius: 7px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; }
+        .bar-fill { height: 100%; position: relative; transition: width 0.3s ease; }
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .bar-hp { 
+            background: linear-gradient(90deg, #00e676, #00c853, #64dd17);
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.5);
+        }
+        .bar-mp { 
+            background: linear-gradient(90deg, #2979ff, #2962ff, #448aff);
+            box-shadow: 0 0 15px rgba(41, 121, 255, 0.5);
+        }
+        .bar-exp { 
+            background: linear-gradient(90deg, #e040fb, #d500f9, #aa00ff);
+            box-shadow: 0 0 15px rgba(224, 64, 251, 0.5);
+        }
+        .hud-stats { display: flex; gap: 15px; margin-top: 12px; font-size: 12px; color: #ddd; }
+        .hud-stat { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px; }
+        
+        /* 위치 표시 */
+        .location { 
+            position: absolute; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.95), rgba(20, 20, 35, 0.95));
+            backdrop-filter: blur(10px);
+            padding: 10px 25px; 
+            border-radius: 20px; 
+            border: 2px solid rgba(255, 215, 0, 0.7); 
+            color: #ffd700; 
+            font-size: 14px; 
+            font-weight: bold;
+            display: none; 
+            z-index: 10; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
         .location.show { display: block; }
-        .joy-area { position: absolute; bottom: 20px; left: 20px; width: 110px; height: 110px; z-index: 100; display: none; }
+        
+        /* 조이스틱 */
+        .joy-area { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; z-index: 100; display: none; }
         .joy-area.show { display: block; }
-        .joy-base { width: 100%; height: 100%; background: rgba(50,50,70,0.8); border-radius: 50%; border: 3px solid rgba(255,215,0,0.4); position: relative; }
-        .joy-stick { width: 40px; height: 40px; background: radial-gradient(circle at 30% 30%, #777, #333); border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-        .btn-area { position: absolute; bottom: 20px; right: 12px; width: 120px; height: 120px; z-index: 100; display: none; }
+        .joy-base { width: 100%; height: 100%; background: rgba(50, 50, 70, 0.7); backdrop-filter: blur(5px); border-radius: 50%; border: 3px solid rgba(255, 215, 0, 0.5); position: relative; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .joy-stick { width: 60px; height: 60px; background: radial-gradient(circle at 35% 35%, #aaa, #444); border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border: 3px solid rgba(255,255,255,0.8); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        
+        /* 액션 버튼 */
+        .btn-area { position: absolute; bottom: 30px; right: 30px; width: 160px; height: 160px; z-index: 100; display: none; }
         .btn-area.show { display: block; }
-        .act-btn { position: absolute; width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
-        .act-btn:active { transform: scale(0.9); }
-        .btn-a { background: #c0392b; right: 0; bottom: 0; }
-        .btn-b { background: #2980b9; left: 0; bottom: 0; }
-        .btn-x { background: #f39c12; right: 0; top: 0; }
-        .btn-y { background: #27ae60; left: 0; top: 0; }
-        .cd { position: absolute; inset: 0; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 10px; }
+        .act-btn { 
+            position: absolute; 
+            width: 70px; 
+            height: 70px; 
+            border-radius: 50%; 
+            border: none;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 28px; 
+            color: white; 
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4),
+                        0 3px 6px rgba(255, 255, 255, 0.1) inset;
+        }
+        .act-btn::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .act-btn:active {
+            transform: scale(0.92);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3),
+                        0 1px 3px rgba(255, 255, 255, 0.1) inset;
+        }
+        .btn-a { background: linear-gradient(135deg, #e74c3c, #c0392b); right: 0; bottom: 0; }
+        .btn-b { background: linear-gradient(135deg, #3498db, #2980b9); left: 0; bottom: 0; }
+        .btn-x { background: linear-gradient(135deg, #f39c12, #e67e22); right: 0; top: 0; }
+        .btn-y { background: linear-gradient(135deg, #2ecc71, #27ae60); left: 0; top: 0; }
+        .cd { position: absolute; inset: 0; background: rgba(0,0,0,0.8); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; }
         .cd.show { display: flex; }
-        .menu-btn { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; background: rgba(0,0,0,0.8); border: 2px solid #ffd700; border-radius: 8px; display: none; align-items: center; justify-content: center; font-size: 18px; z-index: 100; }
+        
+        /* 메뉴 버튼 */
+        .menu-btn { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            width: 50px; 
+            height: 50px; 
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.95), rgba(20, 20, 35, 0.95));
+            backdrop-filter: blur(10px);
+            border: 3px solid #ffd700; 
+            border-radius: 12px; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 24px; 
+            color: #ffd700;
+            z-index: 100; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .menu-btn:active { transform: scale(0.95); }
         .menu-btn.show { display: flex; }
-        .interact { position: absolute; bottom: 145px; left: 50%; transform: translateX(-50%); background: #8e44ad; padding: 8px 20px; border-radius: 15px; border: 2px solid #ffd700; color: #fff; font-size: 12px; display: none; z-index: 90; }
+        
+        /* 상호작용 버튼 */
+        .interact { 
+            position: absolute; 
+            bottom: 200px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: linear-gradient(135deg, #9b59b6, #8e44ad); 
+            padding: 12px 30px; 
+            border-radius: 20px; 
+            border: 3px solid #ffd700; 
+            color: #fff; 
+            font-size: 14px; 
+            font-weight: bold;
+            display: none; 
+            z-index: 90; 
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .interact:active { transform: translateX(-50%) scale(0.95); }
         .interact.show { display: block; }
-        .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; padding: 15px; overflow-y: auto; }
+        
+        /* 스크린 공통 */
+        .screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; padding: 20px; overflow-y: auto; }
         .screen.show { display: flex; }
-        #startScreen { background: linear-gradient(135deg, #74ebd5, #ACB6E5); justify-content: flex-start; padding-top: 25px; }
-        .title { font-size: 1.5em; background: linear-gradient(135deg, #f39c12, #e74c3c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; margin-bottom: 3px; }
-        .subtitle { color: #34495e; font-size: 11px; margin-bottom: 12px; }
-        .poke-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 300px; width: 100%; }
-        .poke-card { background: rgba(255,255,255,0.9); border-radius: 10px; padding: 8px; text-align: center; border: 3px solid transparent; }
-        .poke-card.sel { border-color: #f39c12; transform: translateY(-3px); }
-        .poke-card img { width: 50px; height: 50px; }
-        .poke-card .name { color: #2c3e50; font-weight: bold; font-size: 11px; }
-        .poke-card .type { color: #e74c3c; font-size: 9px; }
-        .start-btn { margin-top: 15px; padding: 10px 35px; background: linear-gradient(135deg, #f39c12, #e74c3c); color: #fff; border: none; border-radius: 20px; font-weight: bold; }
-        .start-btn:disabled { background: #bdc3c7; }
-        .popup { background: rgba(0,0,0,0.9); }
-        .popup-box { background: linear-gradient(180deg, #2c3e50, #1a252f); border: 3px solid #ffd700; border-radius: 15px; padding: 20px; max-width: 320px; width: 90%; max-height: 75vh; overflow-y: auto; }
-        .popup-title { color: #ffd700; font-size: 1.2em; text-align: center; margin-bottom: 12px; border-bottom: 1px solid #ffd700; padding-bottom: 8px; }
-        .p-btn { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 8px; font-weight: bold; color: #fff; }
-        .p-btn.green { background: #27ae60; }
-        .p-btn.blue { background: #2980b9; }
-        .p-btn.red { background: #c0392b; }
-        .shop-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
-        .shop-tab { flex: 1; padding: 6px; background: #34495e; border: none; border-radius: 6px; color: #aaa; font-size: 10px; }
-        .shop-tab.active { background: #f39c12; color: #000; }
-        .shop-list { max-height: 200px; overflow-y: auto; }
-        .shop-item { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 6px; }
-        .shop-item-icon { font-size: 24px; }
+        
+        /* 시작 화면 */
+        #startScreen { 
+            background: linear-gradient(135deg, #1a2980, #26d0ce); 
+            justify-content: flex-start; 
+            padding-top: 40px; 
+        }
+        .title { 
+            font-size: 2.2em; 
+            background: linear-gradient(135deg, #ffd700, #ff9800, #ff5722); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            font-weight: 900; 
+            margin-bottom: 8px; 
+            text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 30px; font-weight: 300; }
+        .poke-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 350px; width: 100%; }
+        .poke-card { 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 15px; 
+            padding: 15px; 
+            text-align: center; 
+            border: 4px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .poke-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        .poke-card.sel { border-color: #ff9800; transform: translateY(-8px); box-shadow: 0 20px 40px rgba(255, 152, 0, 0.3); }
+        .poke-card img { width: 80px; height: 80px; image-rendering: pixelated; }
+        .poke-card .name { color: #2c3e50; font-weight: 800; font-size: 14px; margin-top: 8px; }
+        .poke-card .type { 
+            color: #fff; 
+            font-size: 11px; 
+            background: #e74c3c; 
+            padding: 3px 10px; 
+            border-radius: 12px; 
+            display: inline-block; 
+            margin-top: 5px; 
+            font-weight: bold;
+        }
+        .start-btn { 
+            margin-top: 30px; 
+            padding: 15px 50px; 
+            background: linear-gradient(135deg, #ff9800, #ff5722); 
+            color: #fff; 
+            border: none; 
+            border-radius: 30px; 
+            font-weight: 800; 
+            font-size: 16px;
+            box-shadow: 0 10px 30px rgba(255, 87, 34, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .start-btn:active { transform: scale(0.95); }
+        .start-btn:disabled { background: #bdc3c7; box-shadow: none; cursor: not-allowed; }
+        
+        /* 팝업 공통 */
+        .popup { background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); }
+        .popup-box { 
+            background: linear-gradient(180deg, #2c3e50, #1a252f); 
+            border: 4px solid #ffd700; 
+            border-radius: 25px; 
+            padding: 25px; 
+            max-width: 380px; 
+            width: 90%; 
+            max-height: 80vh; 
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .popup-title { 
+            color: #ffd700; 
+            font-size: 1.5em; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #ffd700; 
+            padding-bottom: 12px; 
+            font-weight: 800;
+        }
+        .p-btn { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            color: #fff; 
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .p-btn:active { transform: scale(0.97); }
+        .p-btn.green { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .p-btn.blue { background: linear-gradient(135deg, #2980b9, #3498db); }
+        .p-btn.red { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+        
+        /* 상점 */
+        .shop-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .shop-tab { flex: 1; padding: 10px; background: #34495e; border: none; border-radius: 10px; color: #aaa; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .shop-tab.active { background: linear-gradient(135deg, #f39c12, #e67e22); color: #000; }
+        .shop-list { max-height: 250px; overflow-y: auto; }
+        .shop-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: rgba(255,255,255,0.1); 
+            padding: 12px; 
+            border-radius: 10px; 
+            margin-bottom: 10px; 
+            border-left: 4px solid #ffd700;
+        }
+        .shop-item-icon { font-size: 32px; }
         .shop-item-info { flex: 1; }
-        .shop-item-name { color: #fff; font-size: 11px; font-weight: bold; }
-        .shop-item-desc { color: #aaa; font-size: 9px; }
-        .shop-item-price { color: #ffd700; font-size: 10px; }
-        .buy-btn { background: #27ae60; border: none; padding: 4px 10px; border-radius: 4px; color: #fff; font-size: 10px; }
-        .buy-btn:disabled { background: #555; }
-        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
-        .inv-slot { aspect-ratio: 1; background: rgba(255,255,255,0.1); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid transparent; position: relative; }
-        .inv-slot.sel { border-color: #ffd700; }
-        .inv-slot .cnt { position: absolute; bottom: 1px; right: 3px; font-size: 9px; color: #ffd700; }
-        .inv-detail { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; display: none; }
+        .shop-item-name { color: #fff; font-size: 14px; font-weight: bold; }
+        .shop-item-desc { color: #aaa; font-size: 11px; margin-top: 3px; }
+        .shop-item-price { color: #ffd700; font-size: 12px; font-weight: bold; }
+        .buy-btn { 
+            background: linear-gradient(135deg, #27ae60, #2ecc71); 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 6px; 
+            color: #fff; 
+            font-size: 12px; 
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .buy-btn:active { transform: scale(0.95); }
+        .buy-btn:disabled { background: #555; cursor: not-allowed; }
+        
+        /* 인벤토리 */
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .inv-slot { 
+            aspect-ratio: 1; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 28px; 
+            border: 3px solid transparent;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .inv-slot:hover { transform: scale(1.05); }
+        .inv-slot.sel { border-color: #ffd700; transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+        .inv-slot .cnt { position: absolute; bottom: 5px; right: 5px; font-size: 12px; color: #ffd700; font-weight: bold; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 10px; }
+        .inv-detail { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; display: none; }
         .inv-detail.show { display: block; }
-        .inv-btns { display: flex; gap: 6px; margin-top: 8px; }
-        .inv-btn { flex: 1; padding: 6px; border: none; border-radius: 4px; font-size: 10px; color: #fff; }
-        .inv-btn.use { background: #27ae60; }
-        .inv-btn.drop { background: #c0392b; }
-        .equip-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
-        .equip-slot { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; text-align: center; }
-        .equip-slot-label { color: #aaa; font-size: 9px; }
-        .equip-slot-icon { font-size: 24px; margin: 4px 0; }
-        .equip-slot-name { color: #fff; font-size: 10px; }
-        .equip-stats { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; }
-        .equip-stat { display: flex; justify-content: space-between; color: #aaa; font-size: 10px; margin: 2px 0; }
-        .equip-stat span:last-child { color: #2ecc71; }
-        .dialog { position: absolute; bottom: 70px; left: 8px; right: 8px; background: rgba(0,0,0,0.95); border: 3px solid #ffd700; border-radius: 12px; padding: 12px; display: none; z-index: 150; }
+        .inv-btns { display: flex; gap: 10px; margin-top: 12px; }
+        .inv-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 12px; color: #fff; font-weight: bold; cursor: pointer; }
+        .inv-btn.use { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .inv-btn.drop { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+        
+        /* 장비 */
+        .equip-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .equip-slot { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #ffd700; }
+        .equip-slot-label { color: #aaa; font-size: 11px; margin-bottom: 5px; }
+        .equip-slot-icon { font-size: 32px; margin: 8px 0; }
+        .equip-slot-name { color: #fff; font-size: 12px; font-weight: bold; }
+        .equip-stats { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
+        .equip-stat { display: flex; justify-content: space-between; color: #aaa; font-size: 12px; margin: 5px 0; }
+        .equip-stat span:last-child { color: #2ecc71; font-weight: bold; }
+        
+        /* 대화창 */
+        .dialog { 
+            position: absolute; 
+            bottom: 100px; 
+            left: 20px; 
+            right: 20px; 
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.98), rgba(20, 20, 35, 0.98));
+            backdrop-filter: blur(10px);
+            border: 4px solid #ffd700; 
+            border-radius: 20px; 
+            padding: 20px; 
+            display: none; 
+            z-index: 150; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
         .dialog.show { display: block; }
-        .dialog-name { color: #ffd700; font-weight: bold; margin-bottom: 6px; font-size: 12px; }
-        .dialog-text { color: #fff; font-size: 12px; line-height: 1.4; }
-        .dialog-opts { margin-top: 10px; }
-        .dialog-opt { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; color: #fff; border: none; width: 100%; text-align: left; font-size: 11px; margin-bottom: 5px; }
+        .dialog-name { color: #ffd700; font-weight: 800; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid rgba(255, 215, 0, 0.3); padding-bottom: 8px; }
+        .dialog-text { color: #fff; font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
+        .dialog-opts { margin-top: 15px; }
+        .dialog-opt { 
+            background: rgba(255,255,255,0.1); 
+            padding: 12px; 
+            border-radius: 10px; 
+            color: #fff; 
+            border: none; 
+            width: 100%; 
+            text-align: left; 
+            font-size: 14px; 
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
         .dialog-opt:hover { background: rgba(255,215,0,0.3); }
-        .go-title { color: #c0392b; font-size: 1.5em; text-align: center; margin-bottom: 15px; }
-        .go-stats { margin-bottom: 15px; }
-        .go-stat { display: flex; justify-content: space-between; color: #fff; padding: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 4px 0; font-size: 12px; }
-        .go-stat span:last-child { color: #ffd700; }
+        
+        /* 게임오버 */
+        .go-title { color: #ff6b6b; font-size: 2em; text-align: center; margin-bottom: 20px; font-weight: 900; text-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .go-stats { margin-bottom: 25px; }
+        .go-stat { display: flex; justify-content: space-between; color: #fff; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 8px 0; font-size: 14px; }
+        .go-stat span:last-child { color: #ffd700; font-weight: bold; }
+        
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .hud-box { min-width: 240px; padding: 12px 16px; }
+            .bar { width: 150px; }
+            .joy-area, .btn-area { transform: scale(0.9); }
+            .poke-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @media (max-width: 480px) {
+            .hud-box { min-width: 200px; }
+            .bar { width: 120px; }
+            .joy-area, .btn-area { transform: scale(0.8); bottom: 20px; }
+            .act-btn { width: 60px; height: 60px; font-size: 24px; }
+            .poke-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
     </style>
 </head>
 <body>
     <canvas id="c"></canvas>
+    
+    <!-- 게임 HUD -->
     <div class="hud" id="hud">
         <div class="hud-box">
             <div class="hud-row">
-                <img class="hud-icon" id="hudIcon">
-                <div>
-                    <div><span class="hud-name" id="hudName">-</span><span class="hud-lv">Lv.<span id="hudLv">1</span></span></div>
-                    <div class="hud-row"><span style="color:#2ecc71;font-size:9px">HP</span><div class="bar"><div class="bar-fill bar-hp" id="hudHp"></div></div></div>
-                    <div class="hud-row"><span style="color:#3498db;font-size:9px">MP</span><div class="bar"><div class="bar-fill bar-mp" id="hudMp"></div></div></div>
-                    <div class="hud-row"><span style="color:#9b59b6;font-size:9px">EXP</span><div class="bar"><div class="bar-fill bar-exp" id="hudExp"></div></div></div>
+                <img class="hud-icon" id="hudIcon" src="" alt="포켓몬">
+                <div style="flex: 1;">
+                    <div>
+                        <span class="hud-name" id="hudName">-</span>
+                        <span class="hud-lv">Lv.<span id="hudLv">1</span></span>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-label">
+                            <span style="color:#2ecc71">HP</span>
+                            <span id="hpText">0/0</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill bar-hp" id="hudHp"></div>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-label">
+                            <span style="color:#3498db">MP</span>
+                            <span id="mpText">0/0</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill bar-mp" id="hudMp"></div>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-label">
+                            <span style="color:#9b59b6">EXP</span>
+                            <span id="expText">0/0</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill bar-exp" id="hudExp"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="hud-stats"><span>⚔️<span id="hudAtk">10</span></span><span>🛡️<span id="hudDef">5</span></span><span style="color:#ffd700">💰<span id="hudGold">0</span></span></div>
+            <div class="hud-stats">
+                <div class="hud-stat">
+                    <i class="fas fa-fist-raised"></i>
+                    <span id="hudAtk">10</span>
+                </div>
+                <div class="hud-stat">
+                    <i class="fas fa-shield-alt"></i>
+                    <span id="hudDef">5</span>
+                </div>
+                <div class="hud-stat">
+                    <i class="fas fa-coins"></i>
+                    <span id="hudGold">0</span>
+                </div>
+            </div>
         </div>
     </div>
+    
     <div class="location" id="loc">🏠 태초마을</div>
-    <div class="menu-btn" id="menuBtn">☰</div>
-    <div class="joy-area" id="joyArea"><div class="joy-base" id="joyBase"><div class="joy-stick" id="joyStick"></div></div></div>
-    <div class="btn-area" id="btnArea">
-        <div class="act-btn btn-a" id="btnA">⚡</div>
-        <div class="act-btn btn-b" id="btnB">✨<div class="cd" id="cdB"></div></div>
-        <div class="act-btn btn-x" id="btnX">💥<div class="cd" id="cdX"></div></div>
-        <div class="act-btn btn-y" id="btnY">💨<div class="cd" id="cdY"></div></div>
+    <div class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></div>
+    
+    <!-- 조이스틱 및 버튼 -->
+    <div class="joy-area" id="joyArea">
+        <div class="joy-base" id="joyBase">
+            <div class="joy-stick" id="joyStick"></div>
+        </div>
     </div>
-    <div class="interact" id="interact">💬 대화하기</div>
+    
+    <div class="btn-area" id="btnArea">
+        <div class="act-btn btn-a" id="btnA">
+            <i class="fas fa-bolt"></i>
+        </div>
+        <div class="act-btn btn-b" id="btnB">
+            <i class="fas fa-star"></i>
+            <div class="cd" id="cdB"></div>
+        </div>
+        <div class="act-btn btn-x" id="btnX">
+            <i class="fas fa-fire"></i>
+            <div class="cd" id="cdX"></div>
+        </div>
+        <div class="act-btn btn-y" id="btnY">
+            <i class="fas fa-wind"></i>
+            <div class="cd" id="cdY"></div>
+        </div>
+    </div>
+    
+    <div class="interact" id="interact">
+        <i class="fas fa-comments"></i> 대화하기
+    </div>
+    
+    <!-- 대화창 -->
     <div class="dialog" id="dialog">
         <div class="dialog-name" id="dName">???</div>
         <div class="dialog-text" id="dText"></div>
         <div class="dialog-opts" id="dOpts"></div>
     </div>
+    
+    <!-- 시작 화면 -->
     <div class="screen show" id="startScreen">
-        <div class="title">🎮 정우의 포켓몬 RPG</div>
-        <div class="subtitle">Pokemon Adventure</div>
+        <div class="title">포켓몬 RPG 어드벤처</div>
+        <div class="subtitle">당신의 모험을 시작하세요!</div>
         <div class="poke-grid" id="pokeGrid"></div>
-        <button class="start-btn" id="startBtn" disabled>포켓몬을 선택하세요</button>
+        <button class="start-btn" id="startBtn" disabled>
+            <i class="fas fa-gamepad"></i> 포켓몬 선택 필요
+        </button>
     </div>
+    
+    <!-- 메뉴 화면 -->
     <div class="screen popup" id="menuScreen">
         <div class="popup-box">
-            <div class="popup-title">⏸️ 메뉴</div>
-            <button class="p-btn green" onclick="closeMenu()">▶️ 계속하기</button>
-            <button class="p-btn blue" onclick="openInv()">🎒 인벤토리</button>
-            <button class="p-btn blue" onclick="openEquip()">⚔️ 장비</button>
-            <button class="p-btn red" onclick="toTitle()">🚪 타이틀로</button>
+            <div class="popup-title">
+                <i class="fas fa-pause-circle"></i> 메뉴
+            </div>
+            <button class="p-btn green" onclick="closeMenu()">
+                <i class="fas fa-play"></i> 게임 계속
+            </button>
+            <button class="p-btn blue" onclick="openInv()">
+                <i class="fas fa-backpack"></i> 인벤토리
+            </button>
+            <button class="p-btn blue" onclick="openEquip()">
+                <i class="fas fa-helmet-battle"></i> 장비
+            </button>
+            <button class="p-btn red" onclick="toTitle()">
+                <i class="fas fa-home"></i> 타이틀로
+            </button>
         </div>
     </div>
+    
+    <!-- 상점 화면 -->
     <div class="screen popup" id="shopScreen">
         <div class="popup-box">
-            <div class="popup-title">🏪 포켓몬 마트</div>
-            <div class="shop-tabs"><button class="shop-tab active" onclick="shopTab(0,this)">소비</button><button class="shop-tab" onclick="shopTab(1,this)">장비</button></div>
+            <div class="popup-title">
+                <i class="fas fa-store"></i> 포켓몬 마트
+            </div>
+            <div class="shop-tabs">
+                <button class="shop-tab active" onclick="shopTab(0,this)">소비 아이템</button>
+                <button class="shop-tab" onclick="shopTab(1,this)">장비 아이템</button>
+            </div>
             <div class="shop-list" id="shopList"></div>
-            <div style="text-align:center;color:#ffd700;margin:10px 0">💰 <span id="shopGold">0</span></div>
-            <button class="p-btn blue" onclick="closeShop()">닫기</button>
+            <div style="text-align:center; color:#ffd700; margin:15px 0; font-size:16px; font-weight:bold;">
+                <i class="fas fa-coins"></i> 보유 골드: <span id="shopGold">0</span>
+            </div>
+            <button class="p-btn blue" onclick="closeShop()">
+                <i class="fas fa-times"></i> 닫기
+            </button>
         </div>
     </div>
+    
+    <!-- 인벤토리 화면 -->
     <div class="screen popup" id="invScreen">
         <div class="popup-box">
-            <div class="popup-title">🎒 인벤토리</div>
+            <div class="popup-title">
+                <i class="fas fa-backpack"></i> 인벤토리
+            </div>
             <div class="inv-grid" id="invGrid"></div>
             <div class="inv-detail" id="invDetail">
-                <div id="invName" style="color:#ffd700;font-weight:bold;font-size:12px"></div>
-                <div id="invDesc" style="color:#aaa;font-size:10px;margin:4px 0"></div>
-                <div class="inv-btns"><button class="inv-btn use" id="invUse">사용</button><button class="inv-btn drop" onclick="dropItem()">버리기</button></div>
+                <div id="invName" style="color:#ffd700;font-weight:bold;font-size:16px"></div>
+                <div id="invDesc" style="color:#aaa;font-size:12px;margin:8px 0"></div>
+                <div class="inv-btns">
+                    <button class="inv-btn use" id="invUse">사용</button>
+                    <button class="inv-btn drop" onclick="dropItem()">버리기</button>
+                </div>
             </div>
-            <button class="p-btn blue" onclick="closeInv()">닫기</button>
+            <button class="p-btn blue" onclick="closeInv()">
+                <i class="fas fa-times"></i> 닫기
+            </button>
         </div>
     </div>
+    
+    <!-- 장비 화면 -->
     <div class="screen popup" id="equipScreen">
         <div class="popup-box">
-            <div class="popup-title">⚔️ 장비</div>
+            <div class="popup-title">
+                <i class="fas fa-helmet-battle"></i> 장비
+            </div>
             <div class="equip-slots" id="equipSlots"></div>
             <div class="equip-stats" id="equipStats"></div>
-            <button class="p-btn blue" onclick="closeEquip()">닫기</button>
+            <button class="p-btn blue" onclick="closeEquip()">
+                <i class="fas fa-times"></i> 닫기
+            </button>
         </div>
     </div>
+    
+    <!-- 게임오버 화면 -->
     <div class="screen popup" id="goScreen">
         <div class="popup-box">
-            <div class="go-title">💀 GAME OVER</div>
-            <div class="go-stats"><div class="go-stat"><span>레벨</span><span id="goLv">1</span></div><div class="go-stat"><span>처치</span><span id="goKills">0</span></div></div>
-            <button class="p-btn green" onclick="respawn()">🏠 마을 부활</button>
-            <button class="p-btn red" onclick="toTitle()">🚪 타이틀로</button>
+            <div class="go-title">
+                <i class="fas fa-skull-crossbones"></i> GAME OVER
+            </div>
+            <div class="go-stats">
+                <div class="go-stat">
+                    <span>최종 레벨</span>
+                    <span id="goLv">1</span>
+                </div>
+                <div class="go-stat">
+                    <span>처치한 포켓몬</span>
+                    <span id="goKills">0</span>
+                </div>
+                <div class="go-stat">
+                    <span>보유 골드</span>
+                    <span id="goGold">0</span>
+                </div>
+            </div>
+            <button class="p-btn green" onclick="respawn()">
+                <i class="fas fa-redo"></i> 마을에서 부활
+            </button>
+            <button class="p-btn red" onclick="toTitle()">
+                <i class="fas fa-home"></i> 타이틀로 돌아가기
+            </button>
         </div>
     </div>
+    
 <script>
+// 게임 상수 및 변수 정의
 const C = document.getElementById('c'), X = C.getContext('2d');
 const resize = () => { C.width = innerWidth; C.height = innerHeight; };
 resize(); onresize = resize;
 
+// 고퀄리티 투사체 이미지 URL (실제 이미지로 교체 가능)
+const PROJECTILE_IMAGES = {
+    electric: 'https://img.icons8.com/color/96/000000/lightning-bolt.png',
+    fire: 'https://img.icons8.com/color/96/000000/fire.png',
+    water: 'https://img.icons8.com/color/96/000000/water.png',
+    ghost: 'https://img.icons8.com/color/96/000000/ghost.png',
+    normal: 'https://img.icons8.com/color/96/000000/star.png',
+    healing: 'https://img.icons8.com/color/96/000000/heart-plus.png'
+};
+
+// 게임 데이터
 const POKE = {
-    pikachu: { id: 25, name: '피카츄', type: '전기', hp: 100, mp: 50, atk: 15, def: 8, spd: 5, color: '#f1c40f' },
-    charmander: { id: 4, name: '파이리', type: '불꽃', hp: 90, mp: 60, atk: 18, def: 6, spd: 4.5, color: '#e74c3c' },
-    squirtle: { id: 7, name: '꼬부기', type: '물', hp: 130, mp: 40, atk: 12, def: 12, spd: 3.8, color: '#3498db' },
-    bulbasaur: { id: 1, name: '이상해씨', type: '풀', hp: 110, mp: 55, atk: 14, def: 10, spd: 4, color: '#2ecc71' },
-    eevee: { id: 133, name: '이브이', type: '노말', hp: 100, mp: 45, atk: 14, def: 9, spd: 5.5, color: '#c8a87c' },
-    gengar: { id: 94, name: '팬텀', type: '고스트', hp: 85, mp: 70, atk: 20, def: 5, spd: 6, color: '#9b59b6' }
+    pikachu: { id: 25, name: '피카츄', type: '전기', hp: 110, mp: 60, atk: 16, def: 8, spd: 6, color: '#f1c40f', projectile: 'electric' },
+    charmander: { id: 4, name: '파이리', type: '불꽃', hp: 100, mp: 70, atk: 20, def: 6, spd: 5, color: '#e74c3c', projectile: 'fire' },
+    squirtle: { id: 7, name: '꼬부기', type: '물', hp: 130, mp: 50, atk: 14, def: 12, spd: 4, color: '#3498db', projectile: 'water' },
+    bulbasaur: { id: 1, name: '이상해씨', type: '풀', hp: 120, mp: 65, atk: 16, def: 10, spd: 4.5, color: '#2ecc71', projectile: 'normal' },
+    eevee: { id: 133, name: '이브이', type: '노말', hp: 105, mp: 55, atk: 15, def: 9, spd: 5.5, color: '#c8a87c', projectile: 'normal' },
+    gengar: { id: 94, name: '팬텀', type: '고스트', hp: 90, mp: 80, atk: 22, def: 5, spd: 6.5, color: '#9b59b6', projectile: 'ghost' }
 };
+
 const ENEMY = {
-    rattata: { id: 19, name: '꼬렛', hp: 35, atk: 6, def: 2, spd: 2, exp: 12, gold: 5 },
-    pidgey: { id: 16, name: '구구', hp: 40, atk: 7, def: 3, spd: 2.5, exp: 15, gold: 7 },
-    zubat: { id: 41, name: '주뱃', hp: 50, atk: 9, def: 3, spd: 3, exp: 20, gold: 10 },
-    geodude: { id: 74, name: '꼬마돌', hp: 70, atk: 12, def: 10, spd: 1.2, exp: 25, gold: 15 }
+    rattata: { id: 19, name: '꼬렛', hp: 40, atk: 7, def: 3, spd: 2.5, exp: 15, gold: 8 },
+    pidgey: { id: 16, name: '구구', hp: 45, atk: 8, def: 4, spd: 3, exp: 18, gold: 10 },
+    zubat: { id: 41, name: '주뱃', hp: 55, atk: 10, def: 4, spd: 3.5, exp: 22, gold: 12 },
+    geodude: { id: 74, name: '꼬마돌', hp: 80, atk: 14, def: 12, spd: 1.5, exp: 28, gold: 18 }
 };
+
 const ITEMS = {
     potion: { name: '회복약', icon: '🧴', desc: 'HP 50 회복', price: 50, type: 'use', eff: { hp: 50 } },
     superPotion: { name: '고급회복약', icon: '💊', desc: 'HP 100 회복', price: 120, type: 'use', eff: { hp: 100 } },
     ether: { name: '이더', icon: '💧', desc: 'MP 30 회복', price: 80, type: 'use', eff: { mp: 30 } },
-    sword1: { name: '날카로운발톱', icon: '🗡️', desc: '공격력 +5', price: 200, type: 'weapon', stat: { atk: 5 } },
-    sword2: { name: '강철발톱', icon: '⚔️', desc: '공격력 +12', price: 500, type: 'weapon', stat: { atk: 12 } },
-    armor1: { name: '가죽조끼', icon: '🥋', desc: '방어력 +3', price: 150, type: 'armor', stat: { def: 3 } },
-    armor2: { name: '강철갑옷', icon: '🛡️', desc: '방어력 +8', price: 400, type: 'armor', stat: { def: 8 } }
-};
-const MAPS = {
-    town: { name: '태초마을', w: 800, h: 600, colors: ['#90d080', '#80c070'], enemies: false, npcs: [
-        { id: 'nurse', x: 400, y: 180, icon: '👩‍⚕️', name: '간호사 다솔', type: 'heal' },
-        { id: 'shop', x: 200, y: 280, icon: '🧑‍💼', name: '상점주인 호철', type: 'shop' },
-        { id: 'boyoung', x: 600, y: 350, icon: '👩', name: '보영엄마', type: 'boyoung' }
-    ], buildings: [{ x: 350, y: 80, w: 100, h: 80, color: '#e74c3c', icon: '🏥' }, { x: 150, y: 200, w: 100, h: 80, color: '#3498db', icon: '🏪' }],
-    portals: [{ x: 750, y: 250, w: 50, h: 100, to: 'route1', tx: 50, ty: 300, label: '1번도로 →' }] },
-    route1: { name: '1번도로', w: 1200, h: 800, colors: ['#88c070', '#78b060'], enemies: true, types: ['rattata', 'pidgey'], max: 8, rate: 3000, npcs: [], buildings: [], trees: 15,
-    portals: [{ x: 0, y: 250, w: 50, h: 100, to: 'town', tx: 700, ty: 300, label: '← 태초마을' }, { x: 1150, y: 350, w: 50, h: 100, to: 'route2', tx: 50, ty: 400, label: '2번도로 →' }] },
-    route2: { name: '2번도로', w: 1500, h: 1000, colors: ['#80a860', '#70984f'], enemies: true, types: ['pidgey', 'zubat', 'geodude'], max: 12, rate: 2500, npcs: [], buildings: [], trees: 25, rocks: 10,
-    portals: [{ x: 0, y: 350, w: 50, h: 100, to: 'route1', tx: 1100, ty: 400, label: '← 1번도로' }] }
+    sword1: { name: '날카로운 발톱', icon: '🗡️', desc: '공격력 +5', price: 200, type: 'weapon', stat: { atk: 5 } },
+    sword2: { name: '강철 발톱', icon: '⚔️', desc: '공격력 +12', price: 500, type: 'weapon', stat: { atk: 12 } },
+    armor1: { name: '가죽 조끼', icon: '🥋', desc: '방어력 +3', price: 150, type: 'armor', stat: { def: 3 } },
+    armor2: { name: '강철 갑옷', icon: '🛡️', desc: '방어력 +8', price: 400, type: 'armor', stat: { def: 8 } }
 };
 
+const MAPS = {
+    town: { 
+        name: '태초마을', 
+        w: 800, h: 600, 
+        colors: ['#90d080', '#80c070'], 
+        enemies: false, 
+        npcs: [
+            { id: 'nurse', x: 400, y: 180, icon: '👩‍⚕️', name: '간호사 다솔', type: 'heal' },
+            { id: 'shop', x: 200, y: 280, icon: '🧑‍💼', name: '상점주인 호철', type: 'shop' },
+            { id: 'boyoung', x: 600, y: 350, icon: '👩', name: '보영엄마', type: 'boyoung' }
+        ], 
+        buildings: [
+            { x: 350, y: 80, w: 100, h: 80, color: '#e74c3c', icon: '🏥' }, 
+            { x: 150, y: 200, w: 100, h: 80, color: '#3498db', icon: '🏪' }
+        ],
+        portals: [
+            { x: 750, y: 250, w: 50, h: 100, to: 'route1', tx: 50, ty: 300, label: '1번도로 →' }
+        ] 
+    },
+    route1: { 
+        name: '1번도로', 
+        w: 1200, h: 800, 
+        colors: ['#88c070', '#78b060'], 
+        enemies: true, 
+        types: ['rattata', 'pidgey'], 
+        max: 8, 
+        rate: 3000, 
+        npcs: [], 
+        buildings: [], 
+        trees: 15,
+        portals: [
+            { x: 0, y: 250, w: 50, h: 100, to: 'town', tx: 700, ty: 300, label: '← 태초마을' }, 
+            { x: 1150, y: 350, w: 50, h: 100, to: 'route2', tx: 50, ty: 400, label: '2번도로 →' }
+        ] 
+    },
+    route2: { 
+        name: '2번도로', 
+        w: 1500, h: 1000, 
+        colors: ['#80a860', '#70984f'], 
+        enemies: true, 
+        types: ['pidgey', 'zubat', 'geodude'], 
+        max: 12, 
+        rate: 2500, 
+        npcs: [], 
+        buildings: [], 
+        trees: 25, 
+        rocks: 10,
+        portals: [
+            { x: 0, y: 350, w: 50, h: 100, to: 'route1', tx: 1100, ty: 400, label: '← 1번도로' }
+        ] 
+    }
+};
+
+// 게임 상태 변수
 let state = 'title', map = 'town', P = null, enemies = [], projs = [], parts = [], npcs = [], obs = [], portals = [], drops = [];
 let cam = { x: 0, y: 0 }, input = { mx: 0, my: 0, a: 0, b: 0, x: 0, y: 0 }, joy = { on: 0, id: null, cx: 0, cy: 0 };
 let cd = { a: 0, b: 0, x: 0, y: 0 }, inv = [], equip = { weapon: null, armor: null }, kills = 0, lt = 0, spawnT = 0;
 let nearNpc = null, nearPortal = null, selPoke = null, selInv = -1, shopMode = 0;
 const imgs = {};
 
+// 유틸리티 함수
 const spr = (id, back) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon${back ? '/back' : ''}/${id}.png`;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rand = (a, b) => Math.random() * (b - a) + a;
+const lerp = (a, b, t) => a + (b - a) * t;
 
+// 이미지 로드 함수
 async function loadImg(src) {
     if (imgs[src]) return imgs[src];
     return new Promise(r => {
@@ -250,38 +756,53 @@ async function loadImg(src) {
     });
 }
 
+// 리소스 프리로드
 async function preload() {
     const urls = [];
     Object.values(POKE).forEach(p => { urls.push(spr(p.id), spr(p.id, 1)); });
     Object.values(ENEMY).forEach(e => { urls.push(spr(e.id), spr(e.id, 1)); });
+    Object.values(PROJECTILE_IMAGES).forEach(url => urls.push(url));
     await Promise.all(urls.map(loadImg));
 }
 
+// 시작 화면 초기화
 function initSelect() {
     const g = document.getElementById('pokeGrid');
     g.innerHTML = '';
     Object.entries(POKE).forEach(([k, p]) => {
         const d = document.createElement('div');
         d.className = 'poke-card';
-        d.innerHTML = `<img src="${spr(p.id)}"><div class="name">${p.name}</div><div class="type">${p.type}</div>`;
+        d.innerHTML = `
+            <img src="${spr(p.id)}" alt="${p.name}">
+            <div class="name">${p.name}</div>
+            <div class="type">${p.type} 타입</div>
+        `;
         d.onclick = () => {
             document.querySelectorAll('.poke-card').forEach(c => c.classList.remove('sel'));
             d.classList.add('sel');
             selPoke = k;
             document.getElementById('startBtn').disabled = false;
-            document.getElementById('startBtn').textContent = '🎮 모험 시작!';
+            document.getElementById('startBtn').innerHTML = '<i class="fas fa-play"></i> 모험 시작!';
         };
         g.appendChild(d);
     });
 }
 
+// 게임 시작
 function startGame() {
     if (!selPoke) return;
     const d = POKE[selPoke];
-    P = { x: 400, y: 400, w: 48, h: 48, hp: d.hp, maxHp: d.hp, mp: d.mp, maxMp: d.mp, atk: d.atk, def: d.def, spd: d.spd,
-        baseAtk: d.atk, baseDef: d.def, baseSpd: d.spd, baseHp: d.hp, lv: 1, exp: 0, expNext: 100, gold: 100,
-        pid: d.id, name: d.name, color: d.color, dir: 'down', inv: 0, dash: 0, dashT: 0 };
-    inv = [{ id: 'potion', n: 3 }];
+    P = { 
+        x: 400, y: 400, w: 56, h: 56, 
+        hp: d.hp, maxHp: d.hp, 
+        mp: d.mp, maxMp: d.mp, 
+        atk: d.atk, def: d.def, spd: d.spd,
+        baseAtk: d.atk, baseDef: d.def, baseSpd: d.spd, baseHp: d.hp, 
+        lv: 1, exp: 0, expNext: 100, gold: 150,
+        pid: d.id, name: d.name, color: d.color, projectileType: d.projectile,
+        dir: 'down', inv: 0, dash: 0, dashT: 0 
+    };
+    inv = [{ id: 'potion', n: 3 }, { id: 'ether', n: 2 }];
     equip = { weapon: null, armor: null };
     kills = 0;
     loadMap('town');
@@ -293,22 +814,30 @@ function startGame() {
     requestAnimationFrame(loop);
 }
 
+// UI 표시/숨김
 function showUI(s) {
-    ['hud', 'loc', 'joyArea', 'btnArea', 'menuBtn'].forEach(id => document.getElementById(id).classList.toggle('show', s));
+    ['hud', 'loc', 'joyArea', 'btnArea', 'menuBtn'].forEach(id => 
+        document.getElementById(id).classList.toggle('show', s));
 }
 
+// 맵 로드
 function loadMap(m) {
     map = m;
     const M = MAPS[m];
     document.getElementById('loc').textContent = (M.enemies ? '⚔️ ' : '🏠 ') + M.name;
     enemies = []; projs = []; parts = []; npcs = []; obs = []; portals = []; drops = []; spawnT = 0;
-    if (M.npcs) M.npcs.forEach(n => npcs.push({ ...n, w: 40, h: 40 }));
+    if (M.npcs) M.npcs.forEach(n => npcs.push({ ...n, w: 48, h: 48 }));
     if (M.buildings) M.buildings.forEach(b => obs.push({ ...b, type: 'bld' }));
-    if (M.trees) for (let i = 0; i < M.trees; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 20, h: 20, type: 'tree' });
-    if (M.rocks) for (let i = 0; i < M.rocks; i++) obs.push({ x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 18, h: 18, type: 'rock' });
+    if (M.trees) for (let i = 0; i < M.trees; i++) obs.push({ 
+        x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 25, h: 25, type: 'tree' 
+    });
+    if (M.rocks) for (let i = 0; i < M.rocks; i++) obs.push({ 
+        x: rand(50, M.w - 50), y: rand(50, M.h - 50), w: 22, h: 22, type: 'rock' 
+    });
     if (M.portals) portals = M.portals.map(p => ({ ...p }));
 }
 
+// 메인 게임 루프
 function loop(t) {
     if (state !== 'play') return;
     const dt = Math.min((t - lt) / 1000, 0.1);
@@ -318,6 +847,7 @@ function loop(t) {
     requestAnimationFrame(loop);
 }
 
+// 게임 상태 업데이트
 function update(dt) {
     const M = MAPS[map];
     updatePlayer(dt, M);
@@ -331,6 +861,7 @@ function update(dt) {
     updateHUD();
 }
 
+// 플레이어 업데이트
 function updatePlayer(dt, M) {
     if (P.dash) { P.dashT -= dt; if (P.dashT <= 0) P.dash = 0; }
     
@@ -339,7 +870,7 @@ function updatePlayer(dt, M) {
         const len = Math.hypot(mx, my);
         if (len > 0) { mx /= len; my /= len; }
         
-        // 방향 설정 - 수정됨
+        // 방향 설정
         if (Math.abs(mx) > Math.abs(my)) {
             P.dir = mx < 0 ? 'left' : 'right';
         } else if (Math.abs(my) > 0.1) {
@@ -352,7 +883,7 @@ function updatePlayer(dt, M) {
         
         let ok = 1;
         obs.forEach(o => {
-            if (nx > o.x - 10 && nx < o.x + o.w + 10 && ny > o.y - 10 && ny < o.y + o.h + 10) ok = 0;
+            if (nx > o.x - 15 && nx < o.x + o.w + 15 && ny > o.y - 15 && ny < o.y + o.h + 15) ok = 0;
         });
         if (ok) {
             P.x = clamp(nx, P.w/2, M.w - P.w/2);
@@ -363,41 +894,87 @@ function updatePlayer(dt, M) {
     if (P.inv > 0) P.inv -= dt * 60;
     Object.keys(cd).forEach(k => { if (cd[k] > 0) cd[k] -= dt * 60; });
     
+    // 공격 및 스킬 사용
     if (input.a && cd.a <= 0 && M.enemies) { fireAtk(); cd.a = 15; }
     if (input.b && cd.b <= 0 && P.mp >= 10 && M.enemies) { fireSkill(); cd.b = 180; P.mp -= 10; }
     if (input.x && cd.x <= 0 && P.mp >= 25 && M.enemies) { fireSpecial(); cd.x = 300; P.mp -= 25; }
-    if (input.y && cd.y <= 0 && !P.dash) { P.dash = 1; P.dashT = 0.15; P.inv = Math.max(P.inv, 15); cd.y = 90; spawnParts(P.x, P.y, P.color, 8); }
+    if (input.y && cd.y <= 0 && !P.dash) { 
+        P.dash = 1; 
+        P.dashT = 0.15; 
+        P.inv = Math.max(P.inv, 15); 
+        cd.y = 90; 
+        spawnParts(P.x, P.y, P.color, 12); 
+    }
     
+    // 아이템 획득
     drops = drops.filter(d => {
-        if (dist(P, d) < 40) { addInv(d.id); spawnParts(d.x, d.y, '#ffd700', 5); return 0; }
+        if (dist(P, d) < 40) { 
+            addInv(d.id); 
+            spawnParts(d.x, d.y, '#ffd700', 8); 
+            return 0; 
+        }
         return 1;
     });
 }
 
+// 기본 공격
 function fireAtk() {
     const dirs = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
     const d = dirs[P.dir];
-    projs.push({ x: P.x + d.x * 25, y: P.y + d.y * 25, vx: d.x * 10, vy: d.y * 10, dmg: P.atk, sz: 8, color: P.color, own: 'p', life: 50 });
-    spawnParts(P.x + d.x * 20, P.y + d.y * 20, P.color, 3);
+    const proj = {
+        x: P.x + d.x * 25, y: P.y + d.y * 25, 
+        vx: d.x * 12, vy: d.y * 12, 
+        dmg: P.atk, w: 24, h: 24, 
+        type: P.projectileType, 
+        own: 'p', 
+        life: 60,
+        rotation: Math.atan2(d.y, d.x),
+        spin: Math.random() * 0.1 - 0.05
+    };
+    projs.push(proj);
+    spawnParts(P.x + d.x * 20, P.y + d.y * 20, P.color, 5);
 }
 
+// 스킬 공격
 function fireSkill() {
     for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2;
-        projs.push({ x: P.x, y: P.y, vx: Math.cos(a) * 7, vy: Math.sin(a) * 7, dmg: Math.floor(P.atk * 1.5), sz: 10, color: '#3498db', own: 'p', life: 50 });
+        projs.push({
+            x: P.x, y: P.y, 
+            vx: Math.cos(a) * 8, vy: Math.sin(a) * 8, 
+            dmg: Math.floor(P.atk * 1.5), w: 28, h: 28, 
+            type: P.projectileType, 
+            own: 'p', 
+            life: 60,
+            rotation: a,
+            spin: 0.1
+        });
     }
-    spawnParts(P.x, P.y, '#3498db', 10);
+    spawnParts(P.x, P.y, '#3498db', 15);
 }
 
+// 특수 공격
 function fireSpecial() {
-    const r = 120;
-    enemies.forEach(e => { if (dist(e, P) < r) dmgEnemy(e, Math.floor(P.atk * 3)); });
-    for (let i = 0; i < 20; i++) {
-        const a = (i / 20) * Math.PI * 2;
-        parts.push({ x: P.x + Math.cos(a) * rand(20, r), y: P.y + Math.sin(a) * rand(20, r), vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 30, color: '#ffd700', sz: 6 });
+    const r = 140;
+    enemies.forEach(e => { 
+        if (dist(e, P) < r) dmgEnemy(e, Math.floor(P.atk * 3)); 
+    });
+    for (let i = 0; i < 25; i++) {
+        const a = (i / 25) * Math.PI * 2;
+        parts.push({ 
+            x: P.x + Math.cos(a) * rand(20, r), 
+            y: P.y + Math.sin(a) * rand(20, r), 
+            vx: Math.cos(a) * 4, 
+            vy: Math.sin(a) * 4, 
+            life: 40, 
+            color: '#ffd700', 
+            sz: rand(4, 10),
+            alpha: 1
+        });
     }
 }
 
+// 적 생성
 function spawnEnemies(dt, M) {
     spawnT += dt * 1000;
     if (spawnT > M.rate && enemies.length < M.max) {
@@ -406,114 +983,177 @@ function spawnEnemies(dt, M) {
         const d = ENEMY[type];
         const mult = 1 + P.lv * 0.1;
         let x, y;
-        do { x = rand(50, M.w - 50); y = rand(50, M.h - 50); } while (dist({ x, y }, P) < 200);
-        enemies.push({ x, y, w: 40, h: 40, hp: Math.floor(d.hp * mult), maxHp: Math.floor(d.hp * mult), atk: Math.floor(d.atk * mult), def: d.def, spd: d.spd, exp: d.exp, gold: d.gold, pid: d.id, name: d.name, dir: 'down', atkCd: 0, hit: 0 });
+        do { 
+            x = rand(50, M.w - 50); 
+            y = rand(50, M.h - 50); 
+        } while (dist({ x, y }, P) < 200);
+        enemies.push({ 
+            x, y, w: 48, h: 48, 
+            hp: Math.floor(d.hp * mult), 
+            maxHp: Math.floor(d.hp * mult), 
+            atk: Math.floor(d.atk * mult), 
+            def: d.def, spd: d.spd, 
+            exp: d.exp, gold: d.gold, 
+            pid: d.id, name: d.name, 
+            dir: 'down', atkCd: 0, hit: 0 
+        });
     }
 }
 
+// 적 업데이트
 function updateEnemies(dt) {
     enemies.forEach(e => {
         if (e.hit > 0) e.hit -= dt * 60;
         const dx = P.x - e.x, dy = P.y - e.y, d = Math.hypot(dx, dy);
-        if (d > 30) {
+        if (d > 35) {
             e.x += (dx / d) * e.spd * dt * 60;
             e.y += (dy / d) * e.spd * dt * 60;
             if (Math.abs(dx) > Math.abs(dy)) e.dir = dx < 0 ? 'left' : 'right';
             else e.dir = dy < 0 ? 'up' : 'down';
         }
-        if (d < 35 && P.inv <= 0 && e.atkCd <= 0) {
+        if (d < 40 && P.inv <= 0 && e.atkCd <= 0) {
             const dmg = Math.max(1, e.atk - P.def);
             P.hp -= dmg;
             P.inv = 45;
             e.atkCd = 60;
-            P.x -= (dx / d) * 20;
-            P.y -= (dy / d) * 20;
-            spawnParts(P.x, P.y, '#e74c3c', 6);
+            P.x -= (dx / d) * 25;
+            P.y -= (dy / d) * 25;
+            spawnParts(P.x, P.y, '#e74c3c', 8);
             if (P.hp <= 0) gameOver();
         }
         if (e.atkCd > 0) e.atkCd -= dt * 60;
     });
 }
 
+// 적 데미지 처리
 function dmgEnemy(e, dmg) {
     const d = Math.max(1, dmg - e.def);
     e.hp -= d;
-    e.hit = 10;
+    e.hit = 15;
+    // 데미지 텍스트 효과
+    parts.push({
+        x: e.x, y: e.y - 30,
+        vx: rand(-1, 1), vy: -2,
+        life: 40,
+        color: '#ff6b6b',
+        sz: 0,
+        text: d.toString(),
+        fontSize: 16,
+        alpha: 1
+    });
+    
     if (e.hp <= 0) {
         kills++;
         gainExp(e.exp);
         P.gold += e.gold;
-        if (Math.random() < 0.2) drops.push({ x: e.x, y: e.y, id: ['potion', 'ether'][Math.floor(Math.random() * 2)] });
-        spawnParts(e.x, e.y, '#ffd700', 12);
+        if (Math.random() < 0.2) drops.push({ 
+            x: e.x, y: e.y, 
+            id: ['potion', 'ether'][Math.floor(Math.random() * 2)] 
+        });
+        spawnParts(e.x, e.y, '#ffd700', 15);
         enemies = enemies.filter(en => en !== e);
     }
 }
 
+// 경험치 획득
 function gainExp(n) {
     P.exp += n;
     while (P.exp >= P.expNext) {
         P.exp -= P.expNext;
         P.lv++;
         P.expNext = Math.floor(100 * Math.pow(1.25, P.lv - 1));
-        P.baseHp += 10; P.baseAtk += 2; P.baseDef += 1;
+        P.baseHp += 12; P.baseAtk += 3; P.baseDef += 2;
         recalc();
         P.hp = P.maxHp; P.mp = P.maxMp;
-        spawnParts(P.x, P.y, '#ffd700', 20);
+        spawnParts(P.x, P.y, '#ffd700', 25);
     }
 }
 
+// 스탯 재계산
 function recalc() {
     P.maxHp = P.baseHp;
     P.atk = P.baseAtk + (equip.weapon?.stat?.atk || 0);
     P.def = P.baseDef + (equip.armor?.stat?.def || 0);
 }
 
+// 투사체 업데이트
 function updateProjs(dt, M) {
     projs = projs.filter(p => {
         p.x += p.vx * dt * 60;
         p.y += p.vy * dt * 60;
         p.life -= dt * 60;
+        p.rotation += p.spin;
+        
         if (p.x < 0 || p.x > M.w || p.y < 0 || p.y > M.h || p.life <= 0) return 0;
+        
         if (p.own === 'p') {
             for (let e of enemies) {
-                if (dist(p, e) < e.w / 2 + p.sz) { dmgEnemy(e, p.dmg); spawnParts(p.x, p.y, '#fff', 3); return 0; }
-            }
-        } else {
-            if (P.inv <= 0 && dist(p, P) < P.w / 2 + p.sz) {
-                const dmg = Math.max(1, p.dmg - P.def);
-                P.hp -= dmg; P.inv = 45;
-                spawnParts(P.x, P.y, '#e74c3c', 5);
-                if (P.hp <= 0) gameOver();
-                return 0;
+                if (dist(p, e) < e.w / 2 + p.w / 2) { 
+                    dmgEnemy(e, p.dmg); 
+                    spawnParts(p.x, p.y, '#fff', 6); 
+                    return 0; 
+                }
             }
         }
         return 1;
     });
 }
 
+// 파티클 생성
 function spawnParts(x, y, color, n) {
-    for (let i = 0; i < n; i++) parts.push({ x, y, vx: rand(-4, 4), vy: rand(-4, 4), life: rand(15, 25), color, sz: rand(3, 6) });
+    for (let i = 0; i < n; i++) {
+        parts.push({ 
+            x, y, 
+            vx: rand(-5, 5), vy: rand(-5, 5), 
+            life: rand(20, 35), 
+            color, 
+            sz: rand(3, 8),
+            alpha: 1,
+            gravity: rand(0.05, 0.15)
+        });
+    }
 }
 
+// 파티클 업데이트
 function updateParts(dt) {
-    parts = parts.filter(p => { p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vx *= 0.95; p.vy *= 0.95; p.life -= dt * 60; return p.life > 0; });
+    parts = parts.filter(p => { 
+        p.x += p.vx * dt * 60; 
+        p.y += p.vy * dt * 60; 
+        p.vx *= 0.95; 
+        p.vy *= 0.95;
+        if (p.gravity) p.vy += p.gravity * dt * 60;
+        p.life -= dt * 60; 
+        p.alpha = p.life / 25;
+        return p.life > 0; 
+    });
 }
 
+// 상호작용 체크
 function checkInteract() {
     nearNpc = null; nearPortal = null;
-    npcs.forEach(n => { if (dist(P, n) < 50) nearNpc = n; });
+    npcs.forEach(n => { if (dist(P, n) < 60) nearNpc = n; });
     portals.forEach(p => { if (P.x > p.x && P.x < p.x + p.w && P.y > p.y && P.y < p.y + p.h) nearPortal = p; });
     const btn = document.getElementById('interact');
-    if (nearNpc) { btn.textContent = `💬 ${nearNpc.name}`; btn.classList.add('show'); }
-    else if (nearPortal) { btn.textContent = `🚪 ${nearPortal.label}`; btn.classList.add('show'); }
-    else btn.classList.remove('show');
+    if (nearNpc) { 
+        btn.innerHTML = `<i class="fas fa-comments"></i> ${nearNpc.name}`; 
+        btn.classList.add('show'); 
+    } else if (nearPortal) { 
+        btn.innerHTML = `<i class="fas fa-door-open"></i> ${nearPortal.label}`; 
+        btn.classList.add('show'); 
+    } else btn.classList.remove('show');
 }
 
+// 상호작용 실행
 function interact() {
     if (nearNpc) startDialog(nearNpc);
-    else if (nearPortal) { P.x = nearPortal.tx; P.y = nearPortal.ty; loadMap(nearPortal.to); }
+    else if (nearPortal) { 
+        P.x = nearPortal.tx; 
+        P.y = nearPortal.ty; 
+        loadMap(nearPortal.to); 
+    }
 }
 
+// 대화 시작
 function startDialog(n) {
     state = 'dialog';
     const d = document.getElementById('dialog');
@@ -522,37 +1162,73 @@ function startDialog(n) {
     const opts = document.getElementById('dOpts');
     name.textContent = n.name;
     opts.innerHTML = '';
+    
     if (n.type === 'heal') {
         text.textContent = '어서오세요! 포켓몬을 치료해 드릴까요?';
-        opts.innerHTML = '<button class="dialog-opt" onclick="healP()">✅ 네</button><button class="dialog-opt" onclick="closeDialog()">❌ 아니요</button>';
+        opts.innerHTML = `
+            <button class="dialog-opt" onclick="healP()">
+                <i class="fas fa-heart"></i> 네, 치료해 주세요
+            </button>
+            <button class="dialog-opt" onclick="closeDialog()">
+                <i class="fas fa-times"></i> 아니요
+            </button>
+        `;
     } else if (n.type === 'shop') {
-        text.textContent = '포켓몬 마트에 오신 걸 환영합니다!';
-        opts.innerHTML = '<button class="dialog-opt" onclick="closeDialog();openShop()">🛒 쇼핑</button><button class="dialog-opt" onclick="closeDialog()">👋 나가기</button>';
+        text.textContent = '포켓몬 마트에 오신 걸 환영합니다! 필요한 것이 있으신가요?';
+        opts.innerHTML = `
+            <button class="dialog-opt" onclick="closeDialog();openShop()">
+                <i class="fas fa-shopping-cart"></i> 쇼핑하기
+            </button>
+            <button class="dialog-opt" onclick="closeDialog()">
+                <i class="fas fa-walking"></i> 나가기
+            </button>
+        `;
     } else if (n.type === 'boyoung') {
         text.textContent = '정우 엉덩이 대!!';
-        opts.innerHTML = '<button class="dialog-opt" onclick="boyoungStep2()">1대</button><button class="dialog-opt" onclick="boyoungStep2()">2대</button><button class="dialog-opt" onclick="boyoungStep2()">15대</button>';
+        opts.innerHTML = `
+            <button class="dialog-opt" onclick="boyoungStep2()">1대</button>
+            <button class="dialog-opt" onclick="boyoungStep2()">2대</button>
+            <button class="dialog-opt" onclick="boyoungStep2()">15대</button>
+        `;
     }
     d.classList.add('show');
 }
 
+// 치료 함수
 function healP() {
-    P.hp = P.maxHp; P.mp = P.maxMp;
-    document.getElementById('dText').textContent = '치료 완료! 💖';
-    document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="closeDialog()">감사합니다!</button>';
+    P.hp = P.maxHp; 
+    P.mp = P.maxMp;
+    document.getElementById('dText').textContent = '치료 완료! 포켓몬이 건강해졌습니다. 💖';
+    document.getElementById('dOpts').innerHTML = `
+        <button class="dialog-opt" onclick="closeDialog()">
+            <i class="fas fa-thumbs-up"></i> 감사합니다!
+        </button>
+    `;
+    updateHUD();
 }
 
+// 보영엄마 이벤트
 function boyoungStep2() {
     document.getElementById('dText').textContent = '뭘로 맞을래?';
-    document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="boyoungHit()">주걱</button><button class="dialog-opt" onclick="boyoungHit()">야구방망이</button><button class="dialog-opt" onclick="boyoungHit()">회초리</button>';
+    document.getElementById('dOpts').innerHTML = `
+        <button class="dialog-opt" onclick="boyoungHit()">주걱</button>
+        <button class="dialog-opt" onclick="boyoungHit()">야구방망이</button>
+        <button class="dialog-opt" onclick="boyoungHit()">회초리</button>
+    `;
 }
 
 function boyoungHit() {
     P.hp = Math.floor(P.hp / 2);
-    document.getElementById('dText').textContent = '아야!! 💥';
-    document.getElementById('dOpts').innerHTML = '<button class="dialog-opt" onclick="closeDialog()">😭 흑흑...</button>';
+    document.getElementById('dText').textContent = '아야!! 💥 정우 엉덩이에 불이야!';
+    document.getElementById('dOpts').innerHTML = `
+        <button class="dialog-opt" onclick="closeDialog()">
+            <i class="fas fa-sad-cry"></i> 흑흑...
+        </button>
+    `;
     updateHUD();
 }
 
+// 대화창 닫기
 function closeDialog() {
     document.getElementById('dialog').classList.remove('show');
     state = 'play';
@@ -560,6 +1236,7 @@ function closeDialog() {
     requestAnimationFrame(loop);
 }
 
+// 상점 열기
 function openShop() {
     document.getElementById('shopScreen').classList.add('show');
     document.getElementById('shopGold').textContent = P.gold;
@@ -568,6 +1245,7 @@ function openShop() {
     state = 'shop';
 }
 
+// 상점 닫기
 function closeShop() {
     document.getElementById('shopScreen').classList.remove('show');
     state = 'play';
@@ -575,6 +1253,7 @@ function closeShop() {
     requestAnimationFrame(loop);
 }
 
+// 상점 탭 변경
 function shopTab(m, el) {
     shopMode = m;
     document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
@@ -582,19 +1261,36 @@ function shopTab(m, el) {
     renderShop();
 }
 
+// 상점 렌더링
 function renderShop() {
     const list = document.getElementById('shopList');
     list.innerHTML = '';
-    const items = shopMode === 0 ? ['potion', 'superPotion', 'ether'] : ['sword1', 'sword2', 'armor1', 'armor2'];
+    const items = shopMode === 0 ? 
+        ['potion', 'superPotion', 'ether'] : 
+        ['sword1', 'sword2', 'armor1', 'armor2'];
+    
     items.forEach(id => {
         const it = ITEMS[id];
         const d = document.createElement('div');
         d.className = 'shop-item';
-        d.innerHTML = `<div class="shop-item-icon">${it.icon}</div><div class="shop-item-info"><div class="shop-item-name">${it.name}</div><div class="shop-item-desc">${it.desc}</div></div><div><div class="shop-item-price">💰 ${it.price}</div><button class="buy-btn" onclick="buyItem('${id}')" ${P.gold < it.price ? 'disabled' : ''}>구매</button></div>`;
+        d.innerHTML = `
+            <div class="shop-item-icon">${it.icon}</div>
+            <div class="shop-item-info">
+                <div class="shop-item-name">${it.name}</div>
+                <div class="shop-item-desc">${it.desc}</div>
+            </div>
+            <div>
+                <div class="shop-item-price">💰 ${it.price}</div>
+                <button class="buy-btn" onclick="buyItem('${id}')" ${P.gold < it.price ? 'disabled' : ''}>
+                    구매
+                </button>
+            </div>
+        `;
         list.appendChild(d);
     });
 }
 
+// 아이템 구매
 function buyItem(id) {
     const it = ITEMS[id];
     if (P.gold < it.price) return;
@@ -604,11 +1300,13 @@ function buyItem(id) {
     renderShop();
 }
 
+// 인벤토리 추가
 function addInv(id) {
     const ex = inv.find(i => i.id === id);
     if (ex) ex.n++; else inv.push({ id, n: 1 });
 }
 
+// 인벤토리 열기
 function openInv() {
     closeMenu();
     document.getElementById('invScreen').classList.add('show');
@@ -617,6 +1315,7 @@ function openInv() {
     state = 'inv';
 }
 
+// 인벤토리 닫기
 function closeInv() {
     document.getElementById('invScreen').classList.remove('show');
     state = 'play';
@@ -624,16 +1323,21 @@ function closeInv() {
     requestAnimationFrame(loop);
 }
 
+// 인벤토리 렌더링
 function renderInv() {
     const g = document.getElementById('invGrid');
     g.innerHTML = '';
     for (let i = 0; i < 12; i++) {
         const s = document.createElement('div');
         s.className = 'inv-slot' + (i === selInv ? ' sel' : '');
-        if (inv[i]) { const it = ITEMS[inv[i].id]; s.innerHTML = `${it?.icon || '?'}<span class="cnt">${inv[i].n}</span>`; }
+        if (inv[i]) { 
+            const it = ITEMS[inv[i].id]; 
+            s.innerHTML = `${it?.icon || '?'}<span class="cnt">${inv[i].n}</span>`; 
+        }
         s.onclick = () => { selInv = i; renderInv(); };
         g.appendChild(s);
     }
+    
     const det = document.getElementById('invDetail');
     if (selInv >= 0 && inv[selInv]) {
         const it = ITEMS[inv[selInv].id];
@@ -641,21 +1345,36 @@ function renderInv() {
         document.getElementById('invName').textContent = it.name;
         document.getElementById('invDesc').textContent = it.desc;
         const btn = document.getElementById('invUse');
-        if (it.type === 'use') { btn.textContent = '사용'; btn.onclick = () => useItem(selInv); }
-        else if (it.type === 'weapon' || it.type === 'armor') { btn.textContent = '장착'; btn.onclick = () => equipItem(selInv); }
-        else { btn.textContent = '-'; btn.onclick = null; }
+        if (it.type === 'use') { 
+            btn.textContent = '사용'; 
+            btn.onclick = () => useItem(selInv); 
+        } else if (it.type === 'weapon' || it.type === 'armor') { 
+            btn.textContent = '장착'; 
+            btn.onclick = () => equipItem(selInv); 
+        } else { 
+            btn.textContent = '-'; 
+            btn.onclick = null; 
+        }
     } else det.classList.remove('show');
 }
 
+// 아이템 사용
 function useItem(i) {
     const iv = inv[i]; if (!iv) return;
     const it = ITEMS[iv.id];
-    if (it.eff?.hp) P.hp = Math.min(P.maxHp, P.hp + it.eff.hp);
-    if (it.eff?.mp) P.mp = Math.min(P.maxMp, P.mp + it.eff.mp);
+    if (it.eff?.hp) {
+        P.hp = Math.min(P.maxHp, P.hp + it.eff.hp);
+        spawnParts(P.x, P.y, '#00e676', 10);
+    }
+    if (it.eff?.mp) {
+        P.mp = Math.min(P.maxMp, P.mp + it.eff.mp);
+        spawnParts(P.x, P.y, '#2979ff', 10);
+    }
     iv.n--; if (iv.n <= 0) inv.splice(i, 1);
     selInv = -1; renderInv(); updateHUD();
 }
 
+// 아이템 장착
 function equipItem(i) {
     const iv = inv[i]; if (!iv) return;
     const it = ITEMS[iv.id];
@@ -666,12 +1385,14 @@ function equipItem(i) {
     recalc(); selInv = -1; renderInv(); updateHUD();
 }
 
+// 아이템 버리기
 function dropItem() {
     if (selInv < 0 || !inv[selInv]) return;
     inv[selInv].n--; if (inv[selInv].n <= 0) inv.splice(selInv, 1);
     selInv = -1; renderInv();
 }
 
+// 장비 화면 열기
 function openEquip() {
     closeMenu();
     document.getElementById('equipScreen').classList.add('show');
@@ -679,6 +1400,7 @@ function openEquip() {
     state = 'equip';
 }
 
+// 장비 화면 닫기
 function closeEquip() {
     document.getElementById('equipScreen').classList.remove('show');
     state = 'play';
@@ -686,17 +1408,48 @@ function closeEquip() {
     requestAnimationFrame(loop);
 }
 
+// 장비 화면 렌더링
 function renderEquip() {
     const s = document.getElementById('equipSlots');
-    s.innerHTML = `<div class="equip-slot"><div class="equip-slot-label">무기</div><div class="equip-slot-icon">${equip.weapon?.icon || '➖'}</div><div class="equip-slot-name">${equip.weapon?.name || '없음'}</div></div>
-    <div class="equip-slot"><div class="equip-slot-label">방어구</div><div class="equip-slot-icon">${equip.armor?.icon || '➖'}</div><div class="equip-slot-name">${equip.armor?.name || '없음'}</div></div>`;
+    s.innerHTML = `
+        <div class="equip-slot">
+            <div class="equip-slot-label">무기</div>
+            <div class="equip-slot-icon">${equip.weapon?.icon || '➖'}</div>
+            <div class="equip-slot-name">${equip.weapon?.name || '없음'}</div>
+        </div>
+        <div class="equip-slot">
+            <div class="equip-slot-label">방어구</div>
+            <div class="equip-slot-icon">${equip.armor?.icon || '➖'}</div>
+            <div class="equip-slot-name">${equip.armor?.name || '없음'}</div>
+        </div>
+    `;
+    
     const st = document.getElementById('equipStats');
-    st.innerHTML = `<div class="equip-stat"><span>공격력</span><span>${P.baseAtk} + ${equip.weapon?.stat?.atk || 0}</span></div>
-    <div class="equip-stat"><span>방어력</span><span>${P.baseDef} + ${equip.armor?.stat?.def || 0}</span></div>`;
+    st.innerHTML = `
+        <div class="equip-stat">
+            <span>공격력</span>
+            <span>${P.baseAtk} + ${equip.weapon?.stat?.atk || 0}</span>
+        </div>
+        <div class="equip-stat">
+            <span>방어력</span>
+            <span>${P.baseDef} + ${equip.armor?.stat?.def || 0}</span>
+        </div>
+    `;
 }
 
-function openMenu() { document.getElementById('menuScreen').classList.add('show'); state = 'menu'; }
-function closeMenu() { document.getElementById('menuScreen').classList.remove('show'); state = 'play'; lt = performance.now(); requestAnimationFrame(loop); }
+// 메뉴 열기/닫기
+function openMenu() { 
+    document.getElementById('menuScreen').classList.add('show'); 
+    state = 'menu'; 
+}
+function closeMenu() { 
+    document.getElementById('menuScreen').classList.remove('show'); 
+    state = 'play'; 
+    lt = performance.now(); 
+    requestAnimationFrame(loop); 
+}
+
+// 타이틀로 돌아가기
 function toTitle() {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
     document.getElementById('startScreen').classList.add('show');
@@ -705,129 +1458,220 @@ function toTitle() {
     selPoke = null;
     document.querySelectorAll('.poke-card').forEach(c => c.classList.remove('sel'));
     document.getElementById('startBtn').disabled = true;
-    document.getElementById('startBtn').textContent = '포켓몬을 선택하세요';
+    document.getElementById('startBtn').innerHTML = '<i class="fas fa-gamepad"></i> 포켓몬을 선택하세요';
 }
 
+// 게임오버
 function gameOver() {
     state = 'gameover';
     document.getElementById('goLv').textContent = P.lv;
     document.getElementById('goKills').textContent = kills;
+    document.getElementById('goGold').textContent = P.gold;
     document.getElementById('goScreen').classList.add('show');
 }
 
+// 부활
 function respawn() {
     document.getElementById('goScreen').classList.remove('show');
-    P.hp = Math.floor(P.maxHp / 2); P.mp = Math.floor(P.maxMp / 2);
+    P.hp = Math.floor(P.maxHp / 2); 
+    P.mp = Math.floor(P.maxMp / 2);
     P.gold = Math.floor(P.gold / 2);
-    P.x = 400; P.y = 400;
+    P.x = 400; 
+    P.y = 400;
     loadMap('town');
     state = 'play';
     lt = performance.now();
     requestAnimationFrame(loop);
 }
 
+// 카메라 업데이트
 function updateCam(M) {
     const tx = P.x - C.width / 2, ty = P.y - C.height / 2;
-    cam.x += (tx - cam.x) * 0.1;
-    cam.y += (ty - cam.y) * 0.1;
+    cam.x = lerp(cam.x, tx, 0.1);
+    cam.y = lerp(cam.y, ty, 0.1);
     cam.x = clamp(cam.x, 0, Math.max(0, M.w - C.width));
     cam.y = clamp(cam.y, 0, Math.max(0, M.h - C.height));
 }
 
+// HUD 업데이트
 function updateHUD() {
     document.getElementById('hudIcon').src = spr(P.pid);
     document.getElementById('hudName').textContent = P.name;
     document.getElementById('hudLv').textContent = P.lv;
-    document.getElementById('hudHp').style.width = (P.hp / P.maxHp * 100) + '%';
-    document.getElementById('hudMp').style.width = (P.mp / P.maxMp * 100) + '%';
-    document.getElementById('hudExp').style.width = (P.exp / P.expNext * 100) + '%';
+    
+    const hpPct = P.hp / P.maxHp;
+    const mpPct = P.mp / P.maxMp;
+    const expPct = P.exp / P.expNext;
+    
+    document.getElementById('hudHp').style.width = (hpPct * 100) + '%';
+    document.getElementById('hudMp').style.width = (mpPct * 100) + '%';
+    document.getElementById('hudExp').style.width = (expPct * 100) + '%';
+    
+    document.getElementById('hpText').textContent = `${Math.floor(P.hp)}/${P.maxHp}`;
+    document.getElementById('mpText').textContent = `${Math.floor(P.mp)}/${P.maxMp}`;
+    document.getElementById('expText').textContent = `${P.exp}/${P.expNext}`;
+    
     document.getElementById('hudAtk').textContent = P.atk;
     document.getElementById('hudDef').textContent = P.def;
     document.getElementById('hudGold').textContent = P.gold;
 }
 
+// 쿨다운 업데이트
 function updateCD() {
-    const show = (id, v) => { const e = document.getElementById(id); if (v > 0) { e.classList.add('show'); e.textContent = Math.ceil(v / 60); } else e.classList.remove('show'); };
+    const show = (id, v) => { 
+        const e = document.getElementById(id); 
+        if (v > 0) { 
+            e.classList.add('show'); 
+            e.textContent = Math.ceil(v / 60); 
+        } else e.classList.remove('show'); 
+    };
     show('cdB', cd.b);
     show('cdX', cd.x);
     show('cdY', cd.y);
 }
 
+// 렌더링
 function render() {
     const M = MAPS[map];
     X.clearRect(0, 0, C.width, C.height);
     X.save();
     X.translate(-cam.x, -cam.y);
     
-    // 배경
-    const ts = 32, sx = Math.floor(cam.x / ts) * ts, sy = Math.floor(cam.y / ts) * ts;
-    for (let x = sx; x < sx + C.width + ts * 2 && x < M.w; x += ts)
+    // 배경 렌더링
+    const ts = 48;
+    const sx = Math.floor(cam.x / ts) * ts;
+    const sy = Math.floor(cam.y / ts) * ts;
+    
+    for (let x = sx; x < sx + C.width + ts * 2 && x < M.w; x += ts) {
         for (let y = sy; y < sy + C.height + ts * 2 && y < M.h; y += ts) {
             X.fillStyle = M.colors[(Math.floor(x/ts) + Math.floor(y/ts)) % 2];
             X.fillRect(x, y, ts, ts);
         }
+    }
     
-    // 포탈
+    // 포탈 렌더링
     portals.forEach(p => {
-        X.fillStyle = 'rgba(147, 112, 219, 0.5)';
+        X.fillStyle = 'rgba(147, 112, 219, 0.6)';
         X.fillRect(p.x, p.y, p.w, p.h);
-        X.fillStyle = '#fff'; X.font = '9px sans-serif'; X.textAlign = 'center';
-        X.fillText(p.label, p.x + p.w/2, p.y - 5);
+        X.strokeStyle = '#9b59b6';
+        X.lineWidth = 3;
+        X.strokeRect(p.x, p.y, p.w, p.h);
+        
+        X.fillStyle = '#fff'; 
+        X.font = 'bold 11px sans-serif'; 
+        X.textAlign = 'center';
+        X.fillText(p.label, p.x + p.w/2, p.y - 8);
     });
     
-    // 건물
+    // 건물 렌더링
     obs.filter(o => o.type === 'bld').forEach(b => {
-        X.fillStyle = b.color; X.fillRect(b.x, b.y, b.w, b.h);
-        X.fillStyle = '#fff'; X.font = '20px sans-serif'; X.textAlign = 'center';
-        X.fillText(b.icon, b.x + b.w/2, b.y + b.h/2 + 7);
+        X.fillStyle = b.color; 
+        X.fillRect(b.x, b.y, b.w, b.h);
+        X.fillStyle = '#fff'; 
+        X.font = '32px sans-serif'; 
+        X.textAlign = 'center';
+        X.fillText(b.icon, b.x + b.w/2, b.y + b.h/2 + 10);
     });
     
-    // 나무/바위
+    // 나무/바위 렌더링
     obs.filter(o => o.type === 'tree' || o.type === 'rock').forEach(o => {
-        X.font = '28px sans-serif'; X.textAlign = 'center';
-        X.fillText(o.type === 'tree' ? '🌲' : '🪨', o.x + o.w/2, o.y + o.h/2 + 10);
+        X.font = '36px sans-serif'; 
+        X.textAlign = 'center';
+        X.fillText(o.type === 'tree' ? '🌲' : '🪨', o.x + o.w/2, o.y + o.h/2 + 12);
     });
     
-    // 드롭
+    // 드롭 아이템 렌더링
     drops.forEach(d => {
         const it = ITEMS[d.id];
-        X.font = '18px sans-serif'; X.textAlign = 'center';
-        X.fillText(it?.icon || '?', d.x, d.y + Math.sin(Date.now()/200) * 3);
+        X.save();
+        X.globalAlpha = 0.8;
+        X.font = '24px sans-serif'; 
+        X.textAlign = 'center';
+        const floatY = d.y + Math.sin(Date.now()/300) * 8;
+        X.fillText(it?.icon || '?', d.x, floatY);
+        
+        // 빛나는 효과
+        X.globalAlpha = 0.3;
+        X.shadowColor = '#ffd700';
+        X.shadowBlur = 15;
+        X.fillText(it?.icon || '?', d.x, floatY);
+        X.shadowBlur = 0;
+        X.restore();
     });
     
-    // NPC
-    npcs.forEach(n => { X.font = '28px sans-serif'; X.textAlign = 'center'; X.fillText(n.icon, n.x, n.y + 10); });
+    // NPC 렌더링
+    npcs.forEach(n => { 
+        X.font = '36px sans-serif'; 
+        X.textAlign = 'center'; 
+        X.fillText(n.icon, n.x, n.y + 12); 
+    });
     
-    // 파티클
+    // 파티클 렌더링
     parts.forEach(p => {
-        X.globalAlpha = p.life / 25;
-        X.fillStyle = p.color;
-        X.beginPath(); X.arc(p.x, p.y, p.sz, 0, Math.PI * 2); X.fill();
+        X.globalAlpha = p.alpha;
+        if (p.text) {
+            X.fillStyle = p.color;
+            X.font = `bold ${p.fontSize}px sans-serif`;
+            X.textAlign = 'center';
+            X.fillText(p.text, p.x, p.y);
+        } else {
+            X.fillStyle = p.color;
+            X.beginPath(); 
+            X.arc(p.x, p.y, p.sz, 0, Math.PI * 2); 
+            X.fill();
+        }
     });
     X.globalAlpha = 1;
     
-    // 투사체
+    // 투사체 렌더링
     projs.forEach(p => {
-        X.fillStyle = p.color; X.shadowColor = p.color; X.shadowBlur = 10;
-        X.beginPath(); X.arc(p.x, p.y, p.sz, 0, Math.PI * 2); X.fill();
-        X.shadowBlur = 0;
+        X.save();
+        X.translate(p.x, p.y);
+        X.rotate(p.rotation);
+        
+        const img = imgs[PROJECTILE_IMAGES[p.type] || PROJECTILE_IMAGES.normal];
+        if (img) {
+            X.drawImage(img, -p.w/2, -p.h/2, p.w, p.h);
+        } else {
+            X.fillStyle = getProjectileColor(p.type);
+            X.beginPath(); 
+            X.arc(0, 0, p.w/2, 0, Math.PI * 2); 
+            X.fill();
+        }
+        
+        // 빛나는 효과
+        X.globalAlpha = 0.5;
+        X.shadowColor = getProjectileColor(p.type);
+        X.shadowBlur = 15;
+        if (img) {
+            X.drawImage(img, -p.w/2, -p.h/2, p.w, p.h);
+        } else {
+            X.beginPath(); 
+            X.arc(0, 0, p.w/2, 0, Math.PI * 2); 
+            X.fill();
+        }
+        X.restore();
     });
     
-    // 적
-    enemies.forEach(e => drawChar(e, 1));
+    // 적 렌더링
+    enemies.forEach(e => drawChar(e, true));
     
-    // 플레이어
-    if (P.inv <= 0 || Math.floor(Date.now()/80) % 2 === 0) drawChar(P, 0);
+    // 플레이어 렌더링
+    if (P.inv <= 0 || Math.floor(Date.now()/80) % 2 === 0) drawChar(P, false);
     
     X.restore();
 }
 
+// 캐릭터 렌더링
 function drawChar(c, isEnemy) {
     const back = c.dir === 'up';
     const img = imgs[spr(c.pid, back)];
     
-    X.fillStyle = 'rgba(0,0,0,0.2)';
-    X.beginPath(); X.ellipse(c.x, c.y + c.h/2, c.w/3, 8, 0, 0, Math.PI * 2); X.fill();
+    // 그림자
+    X.fillStyle = 'rgba(0,0,0,0.3)';
+    X.beginPath(); 
+    X.ellipse(c.x, c.y + c.h/2, c.w/3, 10, 0, 0, Math.PI * 2); 
+    X.fill();
     
     if (img) {
         X.save();
@@ -840,20 +1684,44 @@ function drawChar(c, isEnemy) {
             X.drawImage(img, c.x - c.w/2, c.y - c.h/2, c.w, c.h);
         }
         X.restore();
+    } else {
+        X.fillStyle = c.color;
+        X.fillRect(c.x - c.w/2, c.y - c.h/2, c.w, c.h);
     }
     
+    // 적 HP 바
     if (isEnemy) {
         const pct = c.hp / c.maxHp;
-        X.fillStyle = '#333'; X.fillRect(c.x - 18, c.y - c.h/2 - 8, 36, 4);
-        X.fillStyle = pct > 0.3 ? '#2ecc71' : '#e74c3c';
-        X.fillRect(c.x - 18, c.y - c.h/2 - 8, 36 * pct, 4);
+        X.fillStyle = 'rgba(0,0,0,0.7)'; 
+        X.fillRect(c.x - 25, c.y - c.h/2 - 15, 50, 8);
+        X.fillStyle = pct > 0.5 ? '#2ecc71' : pct > 0.2 ? '#f39c12' : '#e74c3c';
+        X.fillRect(c.x - 25, c.y - c.h/2 - 15, 50 * pct, 8);
+        
+        // 적 이름
+        X.fillStyle = '#fff';
+        X.font = 'bold 12px sans-serif';
+        X.textAlign = 'center';
+        X.fillText(c.name, c.x, c.y - c.h/2 - 25);
     }
 }
 
-// 입력
+// 투사체 색상 가져오기
+function getProjectileColor(type) {
+    const colors = {
+        electric: '#FFEB3B',
+        fire: '#FF5722',
+        water: '#2196F3',
+        ghost: '#9C27B0',
+        normal: '#FFFFFF',
+        healing: '#00E676'
+    };
+    return colors[type] || '#FFFFFF';
+}
+
+// 입력 처리
 const joyArea = document.getElementById('joyArea');
 const joyStick = document.getElementById('joyStick');
-const maxD = 30;
+const maxD = 40;
 
 function joyStart(e) {
     e.preventDefault();
@@ -870,8 +1738,10 @@ function joyMove(e) {
     if (!joy.on) return;
     e.preventDefault();
     let t;
-    if (e.touches) { for (let x of e.touches) if (x.identifier === joy.id) { t = x; break; } if (!t) return; }
-    else t = e;
+    if (e.touches) { 
+        for (let x of e.touches) if (x.identifier === joy.id) { t = x; break; } 
+        if (!t) return; 
+    } else t = e;
     const dx = t.clientX - joy.cx, dy = t.clientY - joy.cy;
     const d = Math.hypot(dx, dy), cd = Math.min(d, maxD), a = Math.atan2(dy, dx);
     const sx = Math.cos(a) * cd, sy = Math.sin(a) * cd;
@@ -882,7 +1752,9 @@ function joyMove(e) {
 }
 
 function joyEnd(e) {
-    if (e.touches && e.touches.length > 0) { for (let t of e.touches) if (t.identifier === joy.id) return; }
+    if (e.touches && e.touches.length > 0) { 
+        for (let t of e.touches) if (t.identifier === joy.id) return; 
+    }
     joy.on = 0;
     joyStick.style.left = '50%';
     joyStick.style.top = '50%';
@@ -890,6 +1762,7 @@ function joyEnd(e) {
     input.my = 0;
 }
 
+// 조이스틱 이벤트 리스너
 joyArea.addEventListener('touchstart', joyStart, { passive: false });
 joyArea.addEventListener('touchmove', joyMove, { passive: false });
 joyArea.addEventListener('touchend', joyEnd);
@@ -898,6 +1771,7 @@ joyArea.addEventListener('mousedown', joyStart);
 document.addEventListener('mousemove', e => { if (joy.on) joyMove(e); });
 document.addEventListener('mouseup', joyEnd);
 
+// 버튼 이벤트 설정
 function btn(id, k) {
     const el = document.getElementById(id);
     el.addEventListener('touchstart', e => { e.preventDefault(); input[k] = 1; }, { passive: false });
@@ -905,12 +1779,17 @@ function btn(id, k) {
     el.addEventListener('mousedown', () => input[k] = 1);
     el.addEventListener('mouseup', () => input[k] = 0);
 }
-btn('btnA', 'a'); btn('btnB', 'b'); btn('btnX', 'x'); btn('btnY', 'y');
+btn('btnA', 'a'); 
+btn('btnB', 'b'); 
+btn('btnX', 'x'); 
+btn('btnY', 'y');
 
+// 기타 인터랙션
 document.getElementById('interact').onclick = interact;
 document.getElementById('menuBtn').onclick = openMenu;
 document.getElementById('startBtn').onclick = startGame;
 
+// 키보드 입력
 const keys = {};
 document.addEventListener('keydown', e => {
     keys[e.key.toLowerCase()] = 1;
@@ -919,7 +1798,10 @@ document.addEventListener('keydown', e => {
     if (e.key === 'x') input.b = 1;
     if (e.key === 'c') input.x = 1;
     if (e.key === 'Shift') input.y = 1;
-    if (e.key === 'Escape') { if (state === 'play') openMenu(); else if (state === 'menu') closeMenu(); }
+    if (e.key === 'Escape') { 
+        if (state === 'play') openMenu(); 
+        else if (state === 'menu') closeMenu(); 
+    }
     if (e.key === 'e' || e.key === 'Enter') interact();
 });
 document.addEventListener('keyup', e => {
@@ -938,10 +1820,11 @@ function updateKeys() {
     }
 }
 
+// 게임 초기화
 async function init() {
     await preload();
     initSelect();
-    console.log('Game Ready!');
+    console.log('고퀄리티 포켓몬 RPG 로드 완료!');
 }
 
 init();
